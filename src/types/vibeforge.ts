@@ -1,0 +1,109 @@
+export type BudgetSensitivity = "low" | "medium" | "high";
+
+export type ProjectInput = {
+  idea: string;
+  targetUsers?: string;
+  problem?: string;
+  desiredOutput?: string;
+  appType: string;
+  timeline: string;
+  skillLevel: string;
+  budgetSensitivity: BudgetSensitivity;
+  preferredStack: string[];
+  apiProviders: string[];
+  wantsMcp: boolean;
+  wantsAutomation: boolean;
+};
+
+export type RepoTool = {
+  id: string;
+  name: string;
+  url: string;
+  category: string;
+  useCase: string;
+  whenToUse: string;
+  whenNotToUse: string;
+  howToUse:
+    | "install"
+    | "clone"
+    | "reference-only"
+    | "external-tool"
+    | "import-workflow";
+  difficulty: "easy" | "medium" | "hard";
+  productionReadiness: "low" | "medium" | "high";
+  riskNotes: string;
+  costNotes: string;
+  suggestedPrompt: string;
+  tags: string[];
+};
+
+export type RepoRecommendation = {
+  tool: RepoTool;
+  lane: "use-directly" | "install" | "reference" | "agent-workflow" | "future";
+  reason: string;
+};
+
+export type ReadinessScore = {
+  productClarity: number;
+  mvpFocus: number;
+  technicalFeasibility: number;
+  costEfficiency: number;
+  agentReadiness: number;
+  launchReadiness: number;
+  strengths: string[];
+  risks: string[];
+  nextActions: string[];
+};
+
+export type ProjectKit = {
+  id: string;
+  name: string;
+  input: ProjectInput;
+  sections: Record<string, string>;
+  favorites: Record<string, boolean>;
+  repoRecommendations: RepoRecommendation[];
+  readinessScore: ReadinessScore;
+  createdAt: string;
+  updatedAt: string;
+  lastOpenedAt?: string;
+};
+
+export type ProviderSettings = {
+  id: string;
+  providerName: string;
+  providerType:
+    | "openai-compatible"
+    | "openrouter"
+    | "gemini"
+    | "anthropic-compatible"
+    | "ollama"
+    | "custom";
+  baseUrl: string;
+  apiKey: string;
+  defaultModel: string;
+  cheapModel: string;
+  strongModel: string;
+  visionModel: string;
+  maxBudgetPerGeneration: number;
+  temperature: number;
+  tokenLimit: number;
+  enabled: boolean;
+};
+
+export type McpConnection = {
+  id: string;
+  name: string;
+  type:
+    | "IDE / editor"
+    | "CLI coding agent"
+    | "GitHub"
+    | "Browser automation"
+    | "Filesystem"
+    | "Database"
+    | "n8n"
+    | "Custom MCP server";
+  commandOrUrl: string;
+  environmentVariables: string;
+  status: "Not configured" | "Configured" | "Needs testing";
+  notes: string;
+};

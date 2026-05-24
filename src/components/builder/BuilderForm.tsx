@@ -1,0 +1,342 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowRight, Check, FlaskConical, Sparkles } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
+import { ClarificationPanel } from "@/components/ClarificationPanel";
+import { LoadingState } from "@/components/LoadingState";
+import { defaultInput, generateProjectKit, sampleVideoInput } from "@/lib/generator";
+import { clarificationQuestions } from "@/lib/generator";
+import { getActiveProvider, saveProject } from "@/lib/storage";
+import type { ProjectInput } from "@/types/vibeforge";
+
+const appTypes = [
+  "SaaS",
+  "AI tool",
+  "AI video app",
+  "Automation tool",
+  "n8n workflow",
+  "Dashboard",
+  "Content tool",
+  "E-commerce helper",
+  "Internal business tool",
+  "Mobile app idea",
+  "Other",
+];
+
+const timelines = ["1 night MVP", "1 day MVP", "7 day build", "30 day product", "Full production system"];
+const skillLevels = ["Non-coder", "Beginner", "Builder", "Developer"];
+
+const formSchema = z.object({
+  idea: z.string().min(12, "Describe the project idea in at least one sentence."),
+  targetUsers: z.string().optional(),
+  problem: z.string().optional(),
+  desiredOutput: z.string().optional(),
+  appType: z.string(),
+  timeline: z.string(),
+  skillLevel: z.string(),
+  budgetSensitivity: z.enum(["low", "medium", "high"]),
+  preferredStackText: z.string().optional(),
+  apiProvidersText: z.string().optional(),
+  wantsMcp: z.boolean(),
+  wantsAutomation: z.boolean(),
+});
+
+type BuilderFormValues = z.infer<typeof formSchema>;
+
+export function BuilderForm() {
+  const router = useRouter();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState("");
+  const base = defaultInput();
+  const form = useForm<BuilderFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      ...base,
+      preferredStackText: base.preferredStack.join(", "),
+      apiProvidersText: base.apiProviders.join(", "),
+    },
+  });
+  const watched = form.watch();
+  const questions = useMemo(() => clarificationQuestions(toInput(watched)), [watched]);
+
+  function applySample() {
+    const sample = sampleVideoInput();
+    form.reset({
+      ...sample,
+      preferredStackText: sample.preferredStack.join(", "),
+      apiProvidersText: sample.apiProviders.join(", "),
+    });
+  }
+
+  function chooseDefaults() {
+    const sample = {
+      targetUsers: watched.targetUsers || "First-time founders, freelancers, and non-technical builders.",
+      problem: watched.problem || "The user has a rough idea but lacks a structured build plan and agent-ready files.",
+      desiredOutput:
+        watched.desiredOutput ||
+        "A complete project kit with Markdown files, repo recommendations, tasks, tests, deployment plan, and launch assets.",
+    };
+    form.setValue("targetUsers", sample.targetUsers);
+    form.setValue("problem", sample.problem);
+    form.setValue("desiredOutput", sample.desiredOutput);
+  }
+
+  async function submit(values: BuilderFormValues) {
+    setIsGenerating(true);
+    setError("");
+    try {
+      const project = await generateProjectKit(toInput(values), getActiveProvider());
+      saveProject(project);
+      router.push(`/projects/${project.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed. Try demo mode again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  if (isGenerating) return <LoadingState />;
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Badge variant="teal">Local-first MVP</Badge>
+            <h1 className="mt-3 text-2xl font-semibold tracking-normal text-zinc-950 sm:text-3xl">
+              Turn a rough idea into an AI-buildable project kit.
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
+              Enter the idea, constraints, and build context. VibeForge returns exportable files, repo guidance, settings plans, and implementation prompts.
+            </p>
+          </div>
+          <Button variant="secondary" onClick={applySample}>
+            <FlaskConical className="h-4 w-4" />
+            Load AI video sample
+          </Button>
+        </div>
+
+        <ClarificationPanel questions={questions} onDefaults={chooseDefaults} />
+
+        {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div> : null}
+
+        <form onSubmit={form.handleSubmit(submit)}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Intake</CardTitle>
+              <CardDescription>Keep it plain-language. Defaults are enough to generate a first kit.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <Label htmlFor="idea">Project idea</Label>
+                <Textarea
+                  id="idea"
+                  placeholder="I want to build an AI video app for small shops..."
+                  {...form.register("idea")}
+                />
+                <FieldError>{form.formState.errors.idea?.message}</FieldError>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <TextField label="Target users" name="targetUsers" form={form} />
+                <TextField label="Problem being solved" name="problem" form={form} />
+                <TextField label="Desired output" name="desiredOutput" form={form} />
+              </div>
+
+              <Segmented
+                label="App type"
+                value={watched.appType}
+                options={appTypes}
+                onChange={(value) => form.setValue("appType", value)}
+              />
+              <Segmented
+                label="Timeline"
+                value={watched.timeline}
+                options={timelines}
+                onChange={(value) => form.setValue("timeline", value)}
+              />
+              <Segmented
+                label="Skill level"
+                value={watched.skillLevel}
+                options={skillLevels}
+                onChange={(value) => form.setValue("skillLevel", value)}
+              />
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <Label htmlFor="budgetSensitivity">Budget sensitivity</Label>
+                  <Select id="budgetSensitivity" {...form.register("budgetSensitivity")}>
+                    <option value="high">High - keep API cost low</option>
+                    <option value="medium">Medium - balanced quality</option>
+                    <option value="low">Low - optimize for quality</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="preferredStackText">Preferred stack</Label>
+                  <Input id="preferredStackText" placeholder="Next.js, Supabase" {...form.register("preferredStackText")} />
+                </div>
+                <div>
+                  <Label htmlFor="apiProvidersText">Providers already available</Label>
+                  <Input id="apiProvidersText" placeholder="OpenRouter, Gemini" {...form.register("apiProvidersText")} />
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <CheckOption
+                  label="Include MCP / IDE / CLI integration plan"
+                  checked={watched.wantsMcp}
+                  onChange={(checked) => form.setValue("wantsMcp", checked)}
+                />
+                <CheckOption
+                  label="Include automation or n8n workflow plan"
+                  checked={watched.wantsAutomation}
+                  onChange={(checked) => form.setValue("wantsAutomation", checked)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs leading-5 text-zinc-500">
+                  If no provider key is configured, generation uses deterministic demo mode and still saves the project.
+                </p>
+                <Button type="submit">
+                  <Sparkles className="h-4 w-4" />
+                  Generate project kit
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </form>
+      </div>
+
+      <aside className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>What you get</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-zinc-700">
+            {["17 structured kit sections", "Repo/tool recommendations", "Markdown, JSON, and ZIP export", "Cost-aware AI model plan", "Codex/Cline prompts", "MCP config snippets"].map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-700" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Local storage notice</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm leading-6 text-zinc-600">
+            Projects, provider settings, and MCP entries are saved in this browser for the MVP. API keys are never hardcoded, but localStorage is not a secret vault.
+          </CardContent>
+        </Card>
+      </aside>
+    </div>
+  );
+}
+
+function TextField({
+  label,
+  name,
+  form,
+}: {
+  label: string;
+  name: "targetUsers" | "problem" | "desiredOutput";
+  form: ReturnType<typeof useForm<BuilderFormValues>>;
+}) {
+  return (
+    <div>
+      <Label htmlFor={name}>{label}</Label>
+      <Input id={name} {...form.register(name)} />
+    </div>
+  );
+}
+
+function Segmented({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.map((option) => (
+          <button
+            type="button"
+            key={option}
+            onClick={() => onChange(option)}
+            className={`rounded-md border px-3 py-2 text-xs font-medium transition ${
+              value === option
+                ? "border-teal-700 bg-teal-50 text-teal-900"
+                : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CheckOption({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm font-medium text-zinc-800">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="h-4 w-4 accent-teal-700"
+      />
+      {label}
+    </label>
+  );
+}
+
+function toInput(values: Partial<BuilderFormValues>): ProjectInput {
+  return {
+    idea: values.idea ?? "",
+    targetUsers: values.targetUsers ?? "",
+    problem: values.problem ?? "",
+    desiredOutput: values.desiredOutput ?? "",
+    appType: values.appType ?? "AI tool",
+    timeline: values.timeline ?? "7 day build",
+    skillLevel: values.skillLevel ?? "Non-coder",
+    budgetSensitivity: values.budgetSensitivity ?? "high",
+    preferredStack: splitList(values.preferredStackText),
+    apiProviders: splitList(values.apiProvidersText),
+    wantsMcp: Boolean(values.wantsMcp),
+    wantsAutomation: Boolean(values.wantsAutomation),
+  };
+}
+
+function splitList(value?: string) {
+  return (value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
