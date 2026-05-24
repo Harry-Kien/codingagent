@@ -15,6 +15,9 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/lib/auth-context";
+import { AuthPanel } from "@/components/auth/AuthPanel";
+import { SyncStatusBadge } from "@/components/auth/SyncStatusBadge";
 
 const navItems = [
   { href: "/", label: "Builder", icon: Home, description: "Create a project kit" },
@@ -25,6 +28,14 @@ const navItems = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <AppShellInner>{children}</AppShellInner>
+    </AuthProvider>
+  );
+}
+
+function AppShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const prevPathname = useRef(pathname);
@@ -58,6 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="block text-sm font-semibold leading-tight">VibeForge</span>
             <span className="block text-[11px] text-zinc-400">AI project OS</span>
           </span>
+          <SyncStatusBadge />
         </Link>
 
         <nav className="mt-6 flex-1 space-y-0.5">
@@ -83,7 +95,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="rounded-lg border border-teal-100 bg-teal-50/60 p-3">
+        <AuthPanel />
+
+        <div className="mt-2 rounded-lg border border-teal-100 bg-teal-50/60 p-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-teal-800">
             <Sparkles className="h-3.5 w-3.5" />
             Demo mode ready

@@ -14,7 +14,8 @@ import { ClarificationPanel } from "@/components/ClarificationPanel";
 import { LoadingState } from "@/components/LoadingState";
 import { defaultInput, generateProjectKit, sampleVideoInput } from "@/lib/generator";
 import { clarificationQuestions } from "@/lib/generator";
-import { getActiveProvider, saveProject } from "@/lib/storage";
+import { getActiveProvider } from "@/lib/storage";
+import { useProjectStore } from "@/lib/use-project-store";
 import type { ProjectInput } from "@/types/vibeforge";
 
 const appTypes = [
@@ -55,6 +56,7 @@ export function BuilderForm() {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
+  const store = useProjectStore();
   const base = defaultInput();
   const form = useForm<BuilderFormValues>({
     resolver: zodResolver(formSchema),
@@ -94,7 +96,7 @@ export function BuilderForm() {
     setError("");
     try {
       const project = await generateProjectKit(toInput(values), getActiveProvider());
-      saveProject(project);
+      await store.saveProject(project);
       router.push(`/projects/${project.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed. Try demo mode again.");

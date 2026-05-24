@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { ProjectKit } from "@/types/vibeforge";
 import { SECTION_ORDER } from "@/lib/kit-sections";
 import { regenerateSection } from "@/lib/generator";
-import { saveProject } from "@/lib/storage";
+import { useProjectStore } from "@/lib/use-project-store";
 import { MarkdownSection } from "@/components/kit/MarkdownSection";
 
 export function ProjectKitTabs({
@@ -16,11 +16,18 @@ export function ProjectKitTabs({
 }) {
   const [project, setProject] = useState(initialProject);
   const [active, setActive] = useState<string>(SECTION_ORDER[0][0]);
+  const store = useProjectStore();
 
-  function update(next: ProjectKit) {
+  function update(next: ProjectKit, isRegeneration = false) {
     setProject(next);
-    saveProject(next);
+    void store.saveProject(next);
     onProjectChange?.(next);
+
+    // Save a version snapshot only on meaningful changes (regeneration),
+    // not on favorites, trivial edits, or renders.
+    if (isRegeneration) {
+      void store.saveVersion(next.id, next.sections, `Regenerated ${active}`);
+    }
   }
 
   function toggleFavorite(sectionKey: string) {
@@ -32,7 +39,7 @@ export function ProjectKitTabs({
   }
 
   function refresh(sectionKey: string) {
-    update(regenerateSection(project, sectionKey));
+    update(regenerateSection(project, sectionKey), true);
   }
 
   return (

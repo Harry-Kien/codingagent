@@ -73,7 +73,7 @@ export function ProviderSettingsForm() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          API keys are saved only in your browser. Production should move provider calls to server routes with encrypted storage and rate limits.
+          <strong>Local-only storage.</strong> API keys are saved only in your browser&apos;s localStorage and are <em>never</em> sent to the cloud, even with cloud sync enabled. Production should move provider calls to server routes with encrypted storage and rate limits.
         </div>
         {providers.map((provider) => (
           <div key={provider.id} className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
