@@ -5,6 +5,7 @@ import { writeGenerationLog } from "@/lib/generation-logs";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { resolveProviderForRequest } from "@/lib/provider-vault";
 import { getRequestUser } from "@/lib/server-auth";
+import { classifyUserFacingError, userFacingError } from "@/lib/user-facing-errors";
 
 export async function POST(request: Request) {
   const startedAt = new Date().toISOString();
@@ -18,8 +19,9 @@ export async function POST(request: Request) {
       startedAt,
       error: "Too many requests.",
     });
+    const error = userFacingError("rate_limited");
     return NextResponse.json(
-      { ok: false, message: "Too many provider tests. Please try again shortly." },
+      { ok: false, message: error.message, error },
       { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
     );
   }
@@ -28,8 +30,9 @@ export async function POST(request: Request) {
   const parsed = testProviderRequestSchema.safeParse(body);
 
   if (!parsed.success) {
+    const error = userFacingError("invalid_request");
     return NextResponse.json(
-      { ok: false, message: "Invalid provider settings." },
+      { ok: false, message: error.message, error },
       { status: 400 },
     );
   }
@@ -51,7 +54,8 @@ export async function POST(request: Request) {
       startedAt,
       error: resolved.error,
     });
-    return NextResponse.json({ ok: false, message: resolved.error }, { status: 400 });
+    const error = classifyUserFacingError(resolved.error);
+    return NextResponse.json({ ok: false, message: error.message, error }, { status: 400 });
   }
 
   const result = await testProviderConnection(resolved.provider);
@@ -66,5 +70,10 @@ export async function POST(request: Request) {
     startedAt,
     error: result.ok ? null : result.message,
   });
-  return NextResponse.json(result, { status: result.ok ? 200 : 400 });
+  if (!result.ok) {
+    const error = classifyUserFacingError(result.message);
+    return NextResponse.json({ ...result, message: error.message, error }, { status: 400 });
+  }
+
+  return NextResponse.json(result, { status: 200 });
 }

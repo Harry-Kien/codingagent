@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { GenerationMode } from "@/types/vibeforge";
 import { getSupabaseAdminClient } from "@/lib/supabase-server";
 

@@ -101,6 +101,10 @@ async function requestHeaders() {
 
 async function errorMessage(response: Response, fallback: string) {
   const json = await response.json().catch(() => null);
+  if (typeof json?.error?.message === "string") {
+    const nextStep = typeof json.error.nextStep === "string" ? ` ${json.error.nextStep}` : "";
+    return `${json.error.message}${nextStep}`;
+  }
   if (typeof json?.error === "string") return json.error;
   if (typeof json?.message === "string") return json.message;
   return fallback;

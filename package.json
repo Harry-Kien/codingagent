@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test:e2e": "playwright test",
     "check:product": "node scripts/product-checks.mjs",
-    "check:exports": "node scripts/verify-exports.mjs"
+    "check:exports": "node scripts/verify-exports.mjs",
+    "check:production": "node scripts/verify-production-hardening.mjs",
+    "check:launch": "node scripts/check-launch.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

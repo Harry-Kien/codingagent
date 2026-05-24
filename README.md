@@ -193,6 +193,14 @@ For cloud sync and authentication:
 
 The app automatically detects Supabase and shows login/sync options.
 
+## Production setup
+
+1. Run both Supabase migrations.
+2. Configure public Supabase browser variables.
+3. Configure server-only `SUPABASE_SERVICE_ROLE_KEY` and `VIBEFORGE_PROVIDER_KEY_SECRET`.
+4. Use saved provider profiles for production provider calls.
+5. Verify generation logs and rate limiting before sharing the app publicly.
+
 ### Production Provider Vault
 
 For production, add these server-only variables:
@@ -204,7 +212,17 @@ VIBEFORGE_PROVIDER_KEY_SECRET=at-least-32-random-characters
 
 Route handlers can resolve a saved `providerProfileId` for the signed-in user, decrypt the API key server-side, call the provider, and write a row to `generation_logs`. Browser-submitted provider keys remain available for local-first usage, but the vault path is the production-safe option.
 
+### Provider Profiles
+
+Provider profiles are owner-scoped with Supabase RLS. Production profiles store provider metadata plus encrypted key fields (`api_key_ciphertext`, `api_key_iv`, `api_key_tag`, `api_key_hint`). The decrypted API key is never returned to the browser; it is used inside route handlers only.
+
+### Generation logs
+
 `generation_logs` records route, provider, model, generation mode, source, status, error message, timestamps, and duration. This gives you a production audit trail for cost, failures, and model behavior.
+
+### Rate limiting
+
+Generation and provider-test routes use per-IP in-memory rate limiting and return `Retry-After` when throttled. For multi-region production, replace the in-memory store with Redis or another shared limiter.
 
 ---
 
@@ -277,6 +295,17 @@ Tests cover:
 - Settings page
 - API health check
 - Navigation (no crashes on any route)
+
+### How to run checks
+
+```bash
+npm run lint
+npm run build
+npm run check:product
+npm run check:exports
+npm run check:production
+npm run test:e2e
+```
 
 ---
 

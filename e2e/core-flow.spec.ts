@@ -32,7 +32,6 @@ test.describe("Homepage / Builder", () => {
     await page.goto("/");
     await page.getByLabel(/project idea/i).fill("short idea");
     // Clarification panel renders — look for its heading or any suggestion text
-    const panel = main(page).locator("[class*=clarif]").or(main(page).getByText(/consider adding/i));
     // The panel may or may not appear depending on the length threshold; just ensure no crash
     await page.waitForTimeout(500);
     expect(true).toBe(true);

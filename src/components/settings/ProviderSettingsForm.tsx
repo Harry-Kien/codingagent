@@ -80,7 +80,7 @@ export function ProviderSettingsForm() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>AI Provider Settings</CardTitle>
-            <p className="mt-1 text-sm text-zinc-600">Stored in localStorage for this MVP. Do not use shared browsers for real keys.</p>
+            <p className="mt-1 text-sm text-zinc-600">Local fallback settings. Do not use shared browsers for real keys.</p>
           </div>
           <Button onClick={addProvider}>
             <Plus className="h-4 w-4" />
@@ -90,8 +90,8 @@ export function ProviderSettingsForm() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          API keys are saved only in your browser and sent to server routes only for generation or connection tests.
-          Production should add encrypted storage, auth, rate limits, and usage logs.
+          This form stores keys in your browser for local-first fallback. Production deployments should use saved
+          provider profiles with the encrypted server-side vault, auth, rate limits, and generation logs.
         </div>
         {providers.map((provider) => (
           <div key={provider.id} className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { ClarificationPanel } from "@/components/ClarificationPanel";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
+import { QuickStartPanel } from "@/components/builder/QuickStartPanel";
 import { defaultInput, generateProjectKit, sampleVideoInput } from "@/lib/generator";
 import { clarificationQuestions } from "@/lib/generator";
 import { generateKitFromServer, hasServerProvider } from "@/lib/generation-client";
@@ -170,6 +171,7 @@ export function BuilderForm() {
           </Button>
         </div>
 
+        <QuickStartPanel />
         <ClarificationPanel questions={questions} onDefaults={chooseDefaults} />
         <AiModeStatus generationMode={currentValues.generationMode} />
 
@@ -323,20 +325,31 @@ export function BuilderForm() {
 function AiModeStatus({ generationMode }: { generationMode: GenerationMode }) {
   const provider = getActiveProvider();
   const active = hasServerProvider(provider);
+  const modeLabel = generationMode === "deep" ? "Deep planning" : generationMode === "fast" ? "Fast draft" : "Balanced";
+  const modeBadge = generationMode === "deep" ? "amber" as const : generationMode === "fast" ? "blue" as const : "teal" as const;
+
+  let statusLabel: string;
+  let statusDescription: string;
+  let statusStyle: string;
+
+  if (active) {
+    statusLabel = `${provider?.providerName ?? "Provider"} active`;
+    statusDescription = `Generation uses ${provider?.defaultModel || provider?.strongModel || provider?.cheapModel || "your configured model"} via server routes.`;
+    statusStyle = "border-teal-200 bg-teal-50 text-teal-900";
+  } else {
+    statusLabel = "Demo mode";
+    statusDescription = "No provider configured. VibeForge generates a deterministic demo kit. Add a provider in Settings for real AI generation.";
+    statusStyle = "border-zinc-200 bg-zinc-50 text-zinc-700";
+  }
+
   return (
-    <div className={`rounded-lg border p-3 text-sm ${active ? "border-teal-200 bg-teal-50 text-teal-900" : "border-zinc-200 bg-zinc-50 text-zinc-700"}`}>
+    <div className={`rounded-lg border p-3 text-sm ${statusStyle}`}>
       <div className="flex flex-wrap items-center gap-2 font-medium">
         <Sparkles className="h-4 w-4" />
-        AI mode: {active ? `${provider?.providerName ?? "Provider"} active` : "Demo fallback"}
-        <Badge variant={generationMode === "deep" ? "amber" : generationMode === "fast" ? "blue" : "teal"}>
-          {generationMode === "deep" ? "Deep planning" : generationMode === "fast" ? "Fast draft" : "Balanced"}
-        </Badge>
+        AI mode: {statusLabel}
+        <Badge variant={modeBadge}>{modeLabel}</Badge>
       </div>
-      <p className="mt-1 text-xs leading-5 opacity-80">
-        {active
-          ? `Generation will use ${provider?.defaultModel || provider?.strongModel || provider?.cheapModel || "your configured model"} through server routes.`
-          : "No active provider is available, so VibeForge will generate a deterministic demo kit."}
-      </p>
+      <p className="mt-1 text-xs leading-5 opacity-80">{statusDescription}</p>
     </div>
   );
 }

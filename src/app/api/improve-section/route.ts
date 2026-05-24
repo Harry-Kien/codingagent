@@ -5,6 +5,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { writeGenerationLog } from "@/lib/generation-logs";
 import { resolveProviderForRequest } from "@/lib/provider-vault";
 import { getRequestUser } from "@/lib/server-auth";
+import { classifyUserFacingError, userFacingError } from "@/lib/user-facing-errors";
 
 export async function POST(request: Request) {
   const startedAt = new Date().toISOString();
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
       error: "Too many requests.",
     });
     return NextResponse.json(
-      { error: "Too many requests. Please try again shortly." },
+      { error: userFacingError("rate_limited") },
       { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
     );
   }
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     console.warn("[API] improve-section: invalid request body");
-    return NextResponse.json({ error: "Invalid section improvement request." }, { status: 400 });
+    return NextResponse.json({ error: userFacingError("invalid_request") }, { status: 400 });
   }
 
   try {
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
         startedAt,
         error: resolved.error,
       });
-      return NextResponse.json({ error: resolved.error }, { status: 400 });
+      return NextResponse.json({ error: classifyUserFacingError(resolved.error) }, { status: 400 });
     }
 
     console.info(`[API] improve-section: starting (section=${parsed.data.sectionKey})`);
@@ -87,6 +88,6 @@ export async function POST(request: Request) {
       error: message,
     });
     console.error("[API] improve-section: failed", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: classifyUserFacingError(message) }, { status: 500 });
   }
 }
