@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AuthPanel } from "@/components/app/AuthPanel";
 
 const navItems = [
   { href: "/", label: "Builder", icon: Home, description: "Create a project kit" },
@@ -92,6 +93,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Works without API keys.
           </p>
         </div>
+
+        <div className="mt-3">
+          <AuthPanel />
+        </div>
       </aside>
 
       {/* Mobile overlay */}
@@ -148,6 +153,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+        <div className="mt-4 px-2">
+          <AuthPanel />
+        </div>
       </aside>
 
       {/* Mobile header */}

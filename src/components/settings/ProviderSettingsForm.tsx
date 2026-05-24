@@ -1,13 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { KeyRound, Plus, Save, Trash2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { AlertTriangle, KeyRound, Plus, Save, Trash2 } from "lucide-react";
 import type { ProviderSettings } from "@/types/vibeforge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { getProviders, saveProviders } from "@/lib/storage";
+import { SyncStatusBadge } from "@/components/app/SyncStatusBadge";
+import {
+  localGetProviders,
+  localSaveProviders,
+  getCloudProviders,
+  saveCloudProviders,
+  resolveStoreMode,
+  type SyncStatus,
+} from "@/lib/project-store";
+import { useAuth } from "@/lib/auth";
 import { uid } from "@/lib/utils";
 
 const providerTypes: ProviderSettings["providerType"][] = [
@@ -20,20 +29,45 @@ const providerTypes: ProviderSettings["providerType"][] = [
 ];
 
 export function ProviderSettingsForm() {
+  const { user, isAuthenticated, isSupabaseAvailable } = useAuth();
+  const storeMode = resolveStoreMode(isAuthenticated, isSupabaseAvailable);
+
   const [providers, setProviders] = useState<ProviderSettings[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("local-only");
+
+  const load = useCallback(async () => {
+    if (storeMode === "cloud" && user) {
+      const result = await getCloudProviders(user.id);
+      if (result.error) {
+        setSyncStatus("sync-failed");
+        setProviders(localGetProviders());
+      } else {
+        setSyncStatus("cloud-synced");
+        setProviders(result.data);
+      }
+    } else {
+      setSyncStatus("local-only");
+      setProviders(localGetProviders());
+    }
+  }, [storeMode, user]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setProviders(getProviders()), 0);
+    const timer = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [load]);
 
-  function persist(next: ProviderSettings[]) {
+  async function persist(next: ProviderSettings[]) {
     setProviders(next);
-    saveProviders(next);
+    // Always save locally (API keys are local-only)
+    localSaveProviders(next);
+    if (storeMode === "cloud" && user) {
+      const result = await saveCloudProviders(next, user.id);
+      setSyncStatus(result.error ? "sync-failed" : "cloud-synced");
+    }
   }
 
   function addProvider() {
-    persist([
+    void persist([
       ...providers,
       {
         id: uid("provider"),
@@ -54,7 +88,7 @@ export function ProviderSettingsForm() {
   }
 
   function update(id: string, patch: Partial<ProviderSettings>) {
-    persist(providers.map((provider) => (provider.id === id ? { ...provider, ...patch } : provider)));
+    void persist(providers.map((provider) => (provider.id === id ? { ...provider, ...patch } : provider)));
   }
 
   return (
@@ -62,8 +96,15 @@ export function ProviderSettingsForm() {
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>AI Provider Settings</CardTitle>
-            <p className="mt-1 text-sm text-zinc-600">Stored in localStorage for this MVP. Do not use shared browsers for real keys.</p>
+            <div className="flex items-center gap-2">
+              <CardTitle>AI Provider Settings</CardTitle>
+              <SyncStatusBadge status={syncStatus} />
+            </div>
+            <p className="mt-1 text-sm text-zinc-600">
+              {storeMode === "cloud"
+                ? "Provider metadata syncs to cloud. API keys stay in your browser."
+                : "Stored in localStorage for this MVP. Do not use shared browsers for real keys."}
+            </p>
           </div>
           <Button onClick={addProvider}>
             <Plus className="h-4 w-4" />
@@ -73,7 +114,13 @@ export function ProviderSettingsForm() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          API keys are saved only in your browser. Production should move provider calls to server routes with encrypted storage and rate limits.
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>
+              API keys are saved <strong>only in your browser</strong>. They are never uploaded to the cloud.
+              {storeMode === "cloud" && " Provider names, models, and settings sync to your account."}
+            </span>
+          </div>
         </div>
         {providers.map((provider) => (
           <div key={provider.id} className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
@@ -87,7 +134,7 @@ export function ProviderSettingsForm() {
                 <Button variant="outline" size="sm" onClick={() => update(provider.id, { enabled: !provider.enabled })}>
                   {provider.enabled ? "Disable" : "Enable"}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => persist(providers.filter((item) => item.id !== provider.id))}>
+                <Button variant="outline" size="sm" onClick={() => void persist(providers.filter((item) => item.id !== provider.id))}>
                   <Trash2 className="h-4 w-4" />
                   Delete
                 </Button>
@@ -102,7 +149,10 @@ export function ProviderSettingsForm() {
                 </Select>
               </div>
               <Field label="Base URL" value={provider.baseUrl} onChange={(value) => update(provider.id, { baseUrl: value })} />
-              <Field label="API key" type="password" value={provider.apiKey} onChange={(value) => update(provider.id, { apiKey: value })} />
+              <div>
+                <Label>API key <span className="text-[10px] text-amber-700">(local only)</span></Label>
+                <Input type="password" value={provider.apiKey} onChange={(event) => update(provider.id, { apiKey: event.target.value })} />
+              </div>
               <Field label="Default model" value={provider.defaultModel} onChange={(value) => update(provider.id, { defaultModel: value })} />
               <Field label="Fast/cheap model" value={provider.cheapModel} onChange={(value) => update(provider.id, { cheapModel: value })} />
               <Field label="Strong/reasoning model" value={provider.strongModel} onChange={(value) => update(provider.id, { strongModel: value })} />
@@ -119,7 +169,7 @@ export function ProviderSettingsForm() {
           </div>
         ) : (
           <div className="flex justify-end">
-            <Button variant="secondary" onClick={() => saveProviders(providers)}>
+            <Button variant="secondary" onClick={() => localSaveProviders(providers)}>
               <Save className="h-4 w-4" />
               Saved locally
             </Button>

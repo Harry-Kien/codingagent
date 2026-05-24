@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Clipboard, Plus, Trash2 } from "lucide-react";
 import type { McpConnection } from "@/types/vibeforge";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/CopyButton";
+import { SyncStatusBadge } from "@/components/app/SyncStatusBadge";
 import { downloadMcpJson } from "@/lib/export";
-import { getMcpConnections, saveMcpConnections } from "@/lib/storage";
+import {
+  localGetMcpConnections,
+  localSaveMcpConnections,
+  getCloudMcpConnections,
+  saveCloudMcpConnections,
+  resolveStoreMode,
+  type SyncStatus,
+} from "@/lib/project-store";
+import { useAuth } from "@/lib/auth";
 import { uid } from "@/lib/utils";
 
 const types: McpConnection["type"][] = [
@@ -24,19 +33,44 @@ const types: McpConnection["type"][] = [
 ];
 
 export function McpConnectionCard() {
-  const [connections, setConnections] = useState<McpConnection[]>([]);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setConnections(getMcpConnections()), 0);
-    return () => window.clearTimeout(timer);
-  }, []);
+  const { user, isAuthenticated, isSupabaseAvailable } = useAuth();
+  const storeMode = resolveStoreMode(isAuthenticated, isSupabaseAvailable);
 
-  function persist(next: McpConnection[]) {
+  const [connections, setConnections] = useState<McpConnection[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("local-only");
+
+  const load = useCallback(async () => {
+    if (storeMode === "cloud" && user) {
+      const result = await getCloudMcpConnections(user.id);
+      if (result.error) {
+        setSyncStatus("sync-failed");
+        setConnections(localGetMcpConnections());
+      } else {
+        setSyncStatus("cloud-synced");
+        setConnections(result.data);
+      }
+    } else {
+      setSyncStatus("local-only");
+      setConnections(localGetMcpConnections());
+    }
+  }, [storeMode, user]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
+  async function persist(next: McpConnection[]) {
     setConnections(next);
-    saveMcpConnections(next);
+    localSaveMcpConnections(next);
+    if (storeMode === "cloud" && user) {
+      const result = await saveCloudMcpConnections(next, user.id);
+      setSyncStatus(result.error ? "sync-failed" : "cloud-synced");
+    }
   }
 
   function addConnection() {
-    persist([
+    void persist([
       ...connections,
       {
         id: uid("mcp"),
@@ -51,7 +85,7 @@ export function McpConnectionCard() {
   }
 
   function update(id: string, patch: Partial<McpConnection>) {
-    persist(connections.map((connection) => (connection.id === id ? { ...connection, ...patch } : connection)));
+    void persist(connections.map((connection) => (connection.id === id ? { ...connection, ...patch } : connection)));
   }
 
   return (
@@ -59,7 +93,10 @@ export function McpConnectionCard() {
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>MCP & External Integrations</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>MCP & External Integrations</CardTitle>
+              <SyncStatusBadge status={syncStatus} />
+            </div>
             <p className="mt-1 text-sm text-zinc-600">Registry placeholders, config snippets, and integration plans for coding agents and external systems.</p>
           </div>
           <div className="flex gap-2">
@@ -80,7 +117,7 @@ export function McpConnectionCard() {
                 <Badge variant="blue">{connection.type}</Badge>
                 <Badge variant={connection.status === "Configured" ? "green" : "amber"}>{connection.status}</Badge>
               </div>
-              <Button variant="outline" size="sm" onClick={() => persist(connections.filter((item) => item.id !== connection.id))}>
+              <Button variant="outline" size="sm" onClick={() => void persist(connections.filter((item) => item.id !== connection.id))}>
                 <Trash2 className="h-4 w-4" />
                 Delete
               </Button>

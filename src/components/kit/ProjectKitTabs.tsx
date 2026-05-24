@@ -4,7 +4,6 @@ import { useState } from "react";
 import type { ProjectKit } from "@/types/vibeforge";
 import { SECTION_ORDER } from "@/lib/kit-sections";
 import { regenerateSection } from "@/lib/generator";
-import { saveProject } from "@/lib/storage";
 import { MarkdownSection } from "@/components/kit/MarkdownSection";
 
 export function ProjectKitTabs({
@@ -19,7 +18,8 @@ export function ProjectKitTabs({
 
   function update(next: ProjectKit) {
     setProject(next);
-    saveProject(next);
+    // Delegate persistence to the parent (ProjectDetailClient), which
+    // handles both local and cloud storage through the store abstraction.
     onProjectChange?.(next);
   }
 
