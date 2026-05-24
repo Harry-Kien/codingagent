@@ -55,12 +55,29 @@ export type ReadinessScore = {
   nextActions: string[];
 };
 
+export type SectionStatus = "Draft" | "Approved" | "Needs review";
+
+export type SectionVersion = {
+  id: string;
+  content: string;
+  status: SectionStatus;
+  createdAt: string;
+  note: string;
+};
+
+export type SectionWorkspaceState = {
+  status: SectionStatus;
+  updatedAt: string;
+  history: SectionVersion[];
+};
+
 export type ProjectKit = {
   id: string;
   name: string;
   input: ProjectInput;
   sections: Record<string, string>;
   favorites: Record<string, boolean>;
+  sectionMeta?: Record<string, SectionWorkspaceState>;
   repoRecommendations: RepoRecommendation[];
   readinessScore: ReadinessScore;
   createdAt: string;

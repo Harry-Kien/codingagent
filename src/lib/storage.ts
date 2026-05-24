@@ -1,6 +1,7 @@
 "use client";
 
 import type { McpConnection, ProjectKit, ProviderSettings } from "@/types/vibeforge";
+import { normalizeProjectWorkspace } from "@/lib/section-workspace";
 
 const PROJECTS_KEY = "vibeforge.projects";
 const PROVIDERS_KEY = "vibeforge.providers";
@@ -22,7 +23,7 @@ function writeJson<T>(key: string, value: T) {
 }
 
 export function getProjects() {
-  return readJson<ProjectKit[]>(PROJECTS_KEY, []);
+  return readJson<ProjectKit[]>(PROJECTS_KEY, []).map(normalizeProjectWorkspace);
 }
 
 export function getProject(id: string) {
@@ -31,7 +32,8 @@ export function getProject(id: string) {
 
 export function saveProject(project: ProjectKit) {
   const projects = getProjects();
-  const next = [project, ...projects.filter((item) => item.id !== project.id)];
+  const normalized = normalizeProjectWorkspace(project);
+  const next = [normalized, ...projects.filter((item) => item.id !== normalized.id)];
   writeJson(PROJECTS_KEY, next);
 }
 
@@ -47,7 +49,7 @@ export function duplicateProject(id: string) {
   if (!project) return null;
   const now = new Date().toISOString();
   const copy: ProjectKit = {
-    ...project,
+    ...normalizeProjectWorkspace(project),
     id: `kit_${crypto.randomUUID()}`,
     name: `${project.name} copy`,
     createdAt: now,

@@ -32,7 +32,7 @@ npm run build
 
 ## Exported Kit Files
 
-ZIP export includes `PROJECT_BRIEF.md`, `TASKS.md`, `AGENTS.md`, `TOOLS.md`, `REPO_MAP.md`, `DATABASE_SCHEMA.md`, `API_SPEC.md`, `UI_SCREENS.md`, `USER_FLOWS.md`, `TEST_PLAN.md`, `DEPLOYMENT_PLAN.md`, `SECURITY_CHECKLIST.md`, `CODEX_PROMPTS.md`, `LAUNCH_KIT.md`, and `project.json`.
+ZIP export includes `PROJECT_BRIEF.md`, `TASKS.md`, `NEXT_ACTIONS.md`, `AGENTS.md`, `TOOLS.md`, `REPO_MAP.md`, `DATABASE_SCHEMA.md`, `API_SPEC.md`, `UI_SCREENS.md`, `USER_FLOWS.md`, `TEST_PLAN.md`, `DEPLOYMENT_PLAN.md`, `SECURITY_CHECKLIST.md`, `CODEX_PROMPTS.md`, `LAUNCH_KIT.md`, and `project.json`.
 
 ## Safety
 
