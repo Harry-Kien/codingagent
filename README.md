@@ -13,6 +13,16 @@ Open `http://localhost:3000`.
 
 The app works without API keys through deterministic demo/mock generation. Provider settings and MCP connections are stored in browser localStorage for the MVP.
 
+## Server AI Routes
+
+Provider-backed generation is routed through Next.js API handlers instead of browser-to-provider calls:
+
+- `POST /api/generate-kit` - validates intake and returns a normalized project kit.
+- `POST /api/regenerate-section` - validates a saved kit and regenerates one section.
+- `POST /api/improve-section` - validates a saved kit and improves one section.
+
+If no usable provider is configured, or if a provider returns an error or malformed JSON, the routes fall back to deterministic demo content. The core flow does not require API keys. `.env.example` lists optional provider variables for deployed server configuration, but MVP provider settings are still stored locally in the browser.
+
 ## Scripts
 
 ```bash

@@ -14,6 +14,7 @@ export const SECTION_ORDER = [
   ["test-plan", "Test Plan", "TEST_PLAN.md"],
   ["deployment-plan", "Deployment Plan", "DEPLOYMENT_PLAN.md"],
   ["security-checklist", "Security Checklist", "SECURITY_CHECKLIST.md"],
+  ["next-actions", "Next Actions", "NEXT_ACTIONS.md"],
   ["launch-kit", "Launch Kit", "LAUNCH_KIT.md"],
   ["codex-cline-prompts", "Codex/Cline Prompts", "CODEX_PROMPTS.md"],
 ] as const;
@@ -41,6 +42,7 @@ export const ZIP_FILE_MAP: Record<string, string> = {
   "test-plan": "TEST_PLAN.md",
   "deployment-plan": "DEPLOYMENT_PLAN.md",
   "security-checklist": "SECURITY_CHECKLIST.md",
+  "next-actions": "NEXT_ACTIONS.md",
   "codex-cline-prompts": "CODEX_PROMPTS.md",
   "launch-kit": "LAUNCH_KIT.md",
 };

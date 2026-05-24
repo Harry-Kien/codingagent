@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Check, FlaskConical, Sparkles } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { ClarificationPanel } from "@/components/ClarificationPanel";
 import { LoadingState } from "@/components/LoadingState";
 import { defaultInput, generateProjectKit, sampleVideoInput } from "@/lib/generator";
 import { clarificationQuestions } from "@/lib/generator";
+import { generateKitFromServer, hasServerProvider } from "@/lib/generation-client";
 import { getActiveProvider, saveProject } from "@/lib/storage";
 import type { ProjectInput } from "@/types/vibeforge";
 
@@ -64,8 +65,9 @@ export function BuilderForm() {
       apiProvidersText: base.apiProviders.join(", "),
     },
   });
-  const watched = form.watch();
-  const questions = useMemo(() => clarificationQuestions(toInput(watched)), [watched]);
+  const watched = useWatch({ control: form.control });
+  const watchedInput = useMemo(() => toInput(watched), [watched]);
+  const questions = useMemo(() => clarificationQuestions(watchedInput), [watchedInput]);
 
   function applySample() {
     const sample = sampleVideoInput();
@@ -93,11 +95,21 @@ export function BuilderForm() {
     setIsGenerating(true);
     setError("");
     try {
-      const project = await generateProjectKit(toInput(values), getActiveProvider());
+      const input = toInput(values);
+      const provider = getActiveProvider();
+      const project = hasServerProvider(provider)
+        ? await generateKitFromServer(input, provider)
+        : await generateProjectKit(input);
       saveProject(project);
       router.push(`/projects/${project.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed. Try demo mode again.");
+      try {
+        const project = await generateProjectKit(toInput(values));
+        saveProject(project);
+        router.push(`/projects/${project.id}`);
+      } catch {
+        setError(err instanceof Error ? err.message : "Generation failed. Try demo mode again.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -153,19 +165,19 @@ export function BuilderForm() {
 
               <Segmented
                 label="App type"
-                value={watched.appType}
+                value={watchedInput.appType}
                 options={appTypes}
                 onChange={(value) => form.setValue("appType", value)}
               />
               <Segmented
                 label="Timeline"
-                value={watched.timeline}
+                value={watchedInput.timeline}
                 options={timelines}
                 onChange={(value) => form.setValue("timeline", value)}
               />
               <Segmented
                 label="Skill level"
-                value={watched.skillLevel}
+                value={watchedInput.skillLevel}
                 options={skillLevels}
                 onChange={(value) => form.setValue("skillLevel", value)}
               />
@@ -192,12 +204,12 @@ export function BuilderForm() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <CheckOption
                   label="Include MCP / IDE / CLI integration plan"
-                  checked={watched.wantsMcp}
+                  checked={watchedInput.wantsMcp}
                   onChange={(checked) => form.setValue("wantsMcp", checked)}
                 />
                 <CheckOption
                   label="Include automation or n8n workflow plan"
-                  checked={watched.wantsAutomation}
+                  checked={watchedInput.wantsAutomation}
                   onChange={(checked) => form.setValue("wantsAutomation", checked)}
                 />
               </div>
@@ -223,7 +235,7 @@ export function BuilderForm() {
             <CardTitle>What you get</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-zinc-700">
-            {["17 structured kit sections", "Repo/tool recommendations", "Markdown, JSON, and ZIP export", "Cost-aware AI model plan", "Codex/Cline prompts", "MCP config snippets"].map((item) => (
+            {["18 structured kit sections", "Repo/tool recommendations", "Markdown, JSON, and ZIP export", "Cost-aware AI model plan", "Codex/Cline prompts", "MCP config snippets"].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-700" />
                 <span>{item}</span>

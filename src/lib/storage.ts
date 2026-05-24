@@ -67,7 +67,9 @@ export function saveProviders(providers: ProviderSettings[]) {
 }
 
 export function getActiveProvider() {
-  return getProviders().find((provider) => provider.enabled && provider.apiKey);
+  return getProviders().find(
+    (provider) => provider.enabled && (provider.apiKey || provider.providerType === "ollama"),
+  );
 }
 
 export function getMcpConnections() {

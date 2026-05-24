@@ -4,7 +4,8 @@ import { useState } from "react";
 import type { ProjectKit } from "@/types/vibeforge";
 import { SECTION_ORDER } from "@/lib/kit-sections";
 import { regenerateSection } from "@/lib/generator";
-import { saveProject } from "@/lib/storage";
+import { hasServerProvider, regenerateSectionFromServer } from "@/lib/generation-client";
+import { getActiveProvider, saveProject } from "@/lib/storage";
 import { MarkdownSection } from "@/components/kit/MarkdownSection";
 
 export function ProjectKitTabs({
@@ -16,6 +17,7 @@ export function ProjectKitTabs({
 }) {
   const [project, setProject] = useState(initialProject);
   const [active, setActive] = useState<string>(SECTION_ORDER[0][0]);
+  const [regeneratingKey, setRegeneratingKey] = useState("");
 
   function update(next: ProjectKit) {
     setProject(next);
@@ -31,8 +33,22 @@ export function ProjectKitTabs({
     });
   }
 
-  function refresh(sectionKey: string) {
-    update(regenerateSection(project, sectionKey));
+  async function refresh(sectionKey: string) {
+    const provider = getActiveProvider();
+
+    if (!hasServerProvider(provider)) {
+      update(regenerateSection(project, sectionKey));
+      return;
+    }
+
+    setRegeneratingKey(sectionKey);
+    try {
+      update(await regenerateSectionFromServer(project, sectionKey, provider));
+    } catch {
+      update(regenerateSection(project, sectionKey));
+    } finally {
+      setRegeneratingKey("");
+    }
   }
 
   return (
@@ -61,6 +77,7 @@ export function ProjectKitTabs({
         sectionKey={active}
         onToggleFavorite={toggleFavorite}
         onRegenerate={refresh}
+        isRegenerating={regeneratingKey === active}
       />
     </div>
   );

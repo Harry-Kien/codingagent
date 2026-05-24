@@ -1,20 +1,11 @@
-"use client";
-
 import type {
   ProjectInput,
   ProjectKit,
-  ProviderSettings,
   ReadinessScore,
 } from "@/types/vibeforge";
 import { SECTION_ORDER, sectionTitle } from "@/lib/kit-sections";
 import { recommendRepos } from "@/lib/repo-data";
 import { slugify, uid } from "@/lib/utils";
-
-const SYSTEM_PROMPT = `You are a senior product architect, software architect, AI workflow engineer, and vibe coding coach.
-
-Convert rough app ideas into concrete, structured, implementation-ready project kits.
-Always include MVP scope, what not to build yet, recommended stack, repo/tool map, task plan, coding agent rules, test plan, deployment plan, security checklist, Codex/Cline prompts, and a cost-aware AI provider plan.
-Favor simple, shippable systems. Explain whether each repo should be installed, cloned, used externally, imported as workflow, or used only as reference.`;
 
 export function clarificationQuestions(input: Partial<ProjectInput>) {
   const questions: string[] = [];
@@ -28,61 +19,24 @@ export function clarificationQuestions(input: Partial<ProjectInput>) {
   return questions.slice(0, 5);
 }
 
-export async function generateProjectKit(
-  input: ProjectInput,
-  provider?: ProviderSettings,
-): Promise<ProjectKit> {
-  if (provider?.apiKey && provider.baseUrl && provider.providerType !== "ollama") {
-    try {
-      const kit = await generateWithProvider(input, provider);
-      if (kit) return kit;
-    } catch {
-      // Fall through to deterministic demo generation.
-    }
-  }
+export async function generateProjectKit(input: ProjectInput): Promise<ProjectKit> {
   return generateMockKit(input);
 }
 
-async function generateWithProvider(input: ProjectInput, provider: ProviderSettings) {
-  const response = await fetch(`${provider.baseUrl.replace(/\/$/, "")}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${provider.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: provider.defaultModel || provider.strongModel,
-      temperature: provider.temperature,
-      max_tokens: provider.tokenLimit,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Return JSON with keys name and sections. Section keys must be: ${SECTION_ORDER.map(([key]) => key).join(", ")}.\n\nProject input:\n${JSON.stringify(input, null, 2)}`,
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) return null;
-  const json = await response.json();
-  const content = json.choices?.[0]?.message?.content;
-  if (!content) return null;
-  const parsed = JSON.parse(content.replace(/^```json|```$/g, "").trim());
+export function buildProjectKit(input: ProjectInput, sections: Record<string, string>, name?: string): ProjectKit {
   const now = new Date().toISOString();
-  const fullInput = input;
   return {
     id: uid("kit"),
-    name: parsed.name ?? inferName(input.idea),
-    input: fullInput,
-    sections: normalizeSections(parsed.sections ?? {}),
+    name: name?.trim() || inferName(input.idea),
+    input,
+    sections: normalizeSections(sections),
     favorites: {},
-    repoRecommendations: recommendRepos(fullInput),
-    readinessScore: scoreProject(fullInput),
+    repoRecommendations: recommendRepos(input),
+    readinessScore: scoreProject(input),
     createdAt: now,
     updatedAt: now,
     lastOpenedAt: now,
-  } satisfies ProjectKit;
+  };
 }
 
 export function generateMockKit(input: ProjectInput): ProjectKit {
@@ -105,7 +59,7 @@ export function generateMockKit(input: ProjectInput): ProjectKit {
     "repo-tool-map": `## Recommendations\n${repoLines}\n\n## Use Directly\nUse Next.js, shadcn/ui, local storage, and provider configuration inside the app.\n\n## Reference Only\nReference repos are for architecture study unless a human explicitly approves code reuse and license review.`,
     "cost-aware-ai-plan": `## Cheap Model Tasks\n- Draft strategy\n- First-pass tasks\n- Repo summaries\n- Clarification questions\n\n## Strong Model Tasks\n- Final architecture\n- Security review\n- Production deployment plan\n- Complex tradeoff decisions\n\n## Cost Controls\n- Cache generated kits locally\n- Regenerate one section at a time\n- Keep reference repo summaries short\n- Avoid video rendering or vision models until needed\n- Use ${input.budgetSensitivity === "high" ? "cheap defaults and strict token limits" : "stronger models only on final review"}`,
     "database-schema": `## Local MVP\nUse localStorage collections:\n\n\`\`\`ts\nprojects: ProjectKit[]\nproviders: ProviderSettings[]\nmcpConnections: McpConnection[]\n\`\`\`\n\n## Supabase Later\n- projects(id, user_id, name, input_json, sections_json, readiness_json, created_at, updated_at)\n- provider_profiles(id, user_id, name, base_url, models_json)\n- mcp_connections(id, user_id, name, type, command_or_url, env_json, status)`,
-    "api-specification": `## MVP Client Services\n- generateProjectKit(input, provider?)\n- regenerateSection(project, sectionKey)\n- exportMarkdown(project)\n- exportZip(project)\n\n## Future API Routes\n- POST /api/generate-kit\n- POST /api/regenerate-section\n- GET /api/projects\n- POST /api/projects\n\nAll server routes must validate input with Zod and apply rate limits before provider calls.`,
+    "api-specification": `## MVP Client Services\n- generateProjectKit(input)\n- regenerateSection(project, sectionKey)\n- exportMarkdown(project)\n- exportZip(project)\n\n## Server API Routes\n- POST /api/generate-kit validates input and runs provider-backed kit generation server-side when a provider is configured\n- POST /api/regenerate-section validates the project and regenerates one section server-side when a provider is configured\n- POST /api/improve-section validates the project and improves one section server-side when a provider is configured\n\nAll provider output is normalized into known section keys, with deterministic demo content used as fallback.`,
     "ui-screens": `## Screens\n- / Builder intake with clarification panel\n- /projects History list with open, duplicate, delete, export\n- /projects/[id] Project cockpit with tabs, score, exports\n- /repo-map Curated repo/tool navigator\n- /settings Provider and MCP configuration\n- /about Short explanation`,
     "user-flows": `## Main Flow\n1. User enters idea and constraints.\n2. App shows clarification questions if the idea is vague.\n3. User chooses sensible defaults or edits details.\n4. App generates a project kit in demo mode or provider mode.\n5. User reviews tabs, copies sections, exports ZIP, and reopens from history.\n\n## Settings Flow\n1. User adds provider or MCP connection.\n2. Settings are stored locally.\n3. Exported kit includes instructions for external agent setup.`,
     "coding-agent-rules": `# Agent Rules\n- Preserve local-first behavior.\n- Do not require API keys for the core flow.\n- Do not clone external repos automatically.\n- Use generated Markdown files as implementation contracts.\n- Work one task at a time and verify with build/lint.\n- Keep UI dense, calm, and usable.`,
@@ -113,6 +67,7 @@ export function generateMockKit(input: ProjectInput): ProjectKit {
     "test-plan": `## Manual Tests\n- Generate a kit in demo/mock mode\n- Open generated project detail from history\n- Export Markdown, JSON, and ZIP\n- Copy a section\n- Regenerate a section\n- Save provider settings locally\n- Add an MCP connection\n- View repo recommendations for an AI video app\n\n## Automated Tests Later\n- Zod schema validation\n- Recommendation matching\n- Export file map\n- Storage migration behavior`,
     "deployment-plan": `## Vercel MVP\n- Set environment variables only when server provider routes are added\n- Deploy Next.js app\n- Verify no secrets are committed\n- Confirm localStorage warning is visible\n\n## Production Later\n- Add Supabase auth and persistence\n- Add provider calls through server routes\n- Add rate limits and request logging`,
     "security-checklist": `- No hardcoded API keys\n- API keys stored locally only for MVP with clear warning\n- Do not execute user-supplied code\n- Do not clone external repos automatically\n- Validate forms with Zod\n- Treat reference repos as reference-only unless reviewed\n- Add server-side rate limits before production provider calls`,
+    "next-actions": `## Next Actions\n- Generate the first complete kit in demo mode\n- Review product strategy, MVP scope, and task plan together\n- Regenerate only the sections that need sharper implementation detail\n- Export Markdown, JSON, or ZIP for the coding agent workflow\n- Keep provider-backed generation behind server routes`,
     "launch-kit": `## Launch Assets\n- One-line pitch: ${name} turns rough app ideas into AI-buildable project kits.\n- Demo script: enter the sample idea, generate kit, export ZIP, open history, show settings.\n- First audience: ${input.targetUsers || "non-technical builders and freelancers"}.\n- Success metric: user exports a complete kit within 10 minutes.`,
     "codex-cline-prompts": `## Codex Prompt\nRead PROJECT_BRIEF.md, AGENTS.md, TASKS.md, and TOOLS.md. Implement the next task without changing unrelated files. Run lint and build before reporting completion.\n\n## Cline Prompt\nUse the project kit as the source of truth. Start with the smallest working vertical slice, ask before adding paid services, and keep exports working.\n\n## Section Regeneration Prompt\nRegenerate only "${sectionTitle("mvp-scope")}" for the current idea. Preserve file names and avoid vague advice.`,
   };
@@ -137,13 +92,13 @@ export function regenerateSection(project: ProjectKit, sectionKey: string): Proj
   return next;
 }
 
-function normalizeSections(sections: Record<string, string>) {
+export function normalizeSections(sections: Record<string, string>) {
   return Object.fromEntries(
     SECTION_ORDER.map(([key, title]) => [key, sections[key] ?? `## ${title}\nTo be generated.`]),
   );
 }
 
-function inferName(idea: string) {
+export function inferName(idea: string) {
   const clean = idea
     .replace(/^i want to build\s+/i, "")
     .replace(/^build\s+/i, "")
@@ -157,7 +112,7 @@ function inferName(idea: string) {
   return name || "VibeForge Project";
 }
 
-function scoreProject(input: ProjectInput): ReadinessScore {
+export function scoreProject(input: ProjectInput): ReadinessScore {
   const detailScore =
     45 +
     Math.min(input.idea.length, 180) / 4 +

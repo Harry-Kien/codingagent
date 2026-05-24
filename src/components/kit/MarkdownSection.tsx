@@ -13,11 +13,13 @@ export function MarkdownSection({
   sectionKey,
   onToggleFavorite,
   onRegenerate,
+  isRegenerating = false,
 }: {
   project: ProjectKit;
   sectionKey: string;
   onToggleFavorite: (sectionKey: string) => void;
   onRegenerate: (sectionKey: string) => void;
+  isRegenerating?: boolean;
 }) {
   const content = project.sections[sectionKey] ?? "";
   return (
@@ -39,9 +41,9 @@ export function MarkdownSection({
               <Star className="h-4 w-4" />
               {project.favorites[sectionKey] ? "Approved" : "Approve"}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => onRegenerate(sectionKey)}>
-              <RefreshCw className="h-4 w-4" />
-              Regenerate
+            <Button variant="outline" size="sm" onClick={() => onRegenerate(sectionKey)} disabled={isRegenerating}>
+              <RefreshCw className={`h-4 w-4 ${isRegenerating ? "animate-spin" : ""}`} />
+              {isRegenerating ? "Regenerating" : "Regenerate"}
             </Button>
           </div>
         </div>
