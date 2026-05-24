@@ -15,18 +15,18 @@ import { Badge } from "@/components/ui/badge";
 
 const features = [
   { icon: Sparkles, title: "Project Kit Generator", desc: "Turn a rough idea into 17+ structured sections covering strategy, tasks, architecture, security, and launch." },
-  { icon: PackageCheck, title: "Repo & Tool Navigator", desc: "Curated database of repos with use-case matching. Each tool has clear install/clone/reference guidance." },
+  { icon: PackageCheck, title: "Repo & Tool Navigator", desc: "Curated database of repos with use-now, use-later, reference-only, and avoid-for-MVP guidance." },
   { icon: Workflow, title: "Cost-Aware AI Routing", desc: "Cheap models for drafts, strong models for architecture. Budget controls and caching built in." },
-  { icon: Code2, title: "Agent-Ready Prompts", desc: "Generate Codex, Cline, and Antigravity prompts that reference your project's actual files and tasks." },
+  { icon: Code2, title: "Agent Export Packs", desc: "Generate Codex, Cline, Cursor, and Claude Code packs with rules, briefs, tasks, prompts, and next actions." },
   { icon: GitBranch, title: "MCP Integration Registry", desc: "Configure and export MCP connections for IDE, CLI, GitHub, n8n, and custom servers." },
-  { icon: FileText, title: "Multi-Format Export", desc: "Export as Markdown, JSON, or full ZIP. Each section can be downloaded individually." },
+  { icon: FileText, title: "Multi-Format Export", desc: "Export as Markdown, JSON, full ZIP, or agent-specific ZIP. Each section can be downloaded individually." },
 ];
 
 const steps = [
   "Describe your app idea and constraints in the Builder.",
   "VibeForge generates a structured project kit with 17+ sections.",
   "Review tabs, approve sections, and refine details.",
-  "Export as ZIP, Markdown, or JSON.",
+  "Export as ZIP, Markdown, JSON, or an agent-specific pack.",
   "Hand the kit to your coding agent and start building.",
 ];
 
@@ -117,7 +117,7 @@ export default function AboutPage() {
       </div>
 
       <p className="text-xs text-zinc-400">
-        VibeForge v0.1 — Local-first MVP. Projects and settings are stored in your browser.
+        VibeForge v0.1 - Local-first MVP. Projects and settings are stored in your browser.
         No API key required for demo mode.
       </p>
     </div>

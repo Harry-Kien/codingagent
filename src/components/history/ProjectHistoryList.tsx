@@ -1,100 +1,60 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
-import {
-  Cloud,
-  CloudUpload,
-  Copy,
-  Download,
-  ExternalLink,
-  HardDrive,
-  Trash2,
-} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Cloud, CloudUpload, Copy, Download, ExternalLink, Trash2 } from "lucide-react";
 import type { ProjectKit } from "@/types/vibeforge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SyncStatusBadge } from "@/components/app/SyncStatusBadge";
-import {
-  localGetProjects,
-  localDeleteProject,
-  localDuplicateProject,
-  getCloudProjects,
-  deleteCloudProject,
-  saveCloudProject,
-  importLocalProjectsToCloud,
-  resolveStoreMode,
-  type SyncStatus,
-} from "@/lib/project-store";
+import { SyncStatusBadge } from "@/components/auth/SyncStatusBadge";
+import { useAuth } from "@/lib/auth-context";
+import { useProjectStore } from "@/lib/use-project-store";
+import { getProjects as getLocalProjects } from "@/lib/storage";
 import { downloadZip } from "@/lib/export";
-import { useAuth } from "@/lib/auth";
 
 export function ProjectHistoryList() {
-  const { user, isAuthenticated, isSupabaseAvailable } = useAuth();
-  const storeMode = resolveStoreMode(isAuthenticated, isSupabaseAvailable);
-
   const [projects, setProjects] = useState<ProjectKit[]>([]);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("local-only");
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    if (storeMode === "cloud" && user) {
-      const result = await getCloudProjects(user.id);
-      if (result.error) {
-        setSyncStatus("sync-failed");
-        // Fall back to local
-        setProjects(localGetProjects());
-      } else {
-        setSyncStatus("cloud-synced");
-        setProjects(result.data);
-      }
-    } else {
-      setSyncStatus("local-only");
-      setProjects(localGetProjects());
-    }
-  }, [storeMode, user]);
+  const [importStatus, setImportStatus] = useState<Record<string, string>>({});
+  const { user } = useAuth();
+  const store = useProjectStore();
+  // Stable ref so the initial-load effect doesn't re-run on every store change.
+  const storeRef = useRef(store);
+  useEffect(() => { storeRef.current = store; }, [store]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void refresh(), 0);
-    return () => window.clearTimeout(timer);
-  }, [refresh]);
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const list = await storeRef.current.getProjects();
+        if (!cancelled) setProjects(list);
+      })();
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [store.mode]);
+  // ↑ Re-fetch only when mode changes (local↔cloud), not on every store ref change.
 
-  async function handleDelete(id: string) {
-    if (storeMode === "cloud") {
-      await deleteCloudProject(id);
-    }
-    localDeleteProject(id);
-    void refresh();
+  async function refresh() {
+    const list = await storeRef.current.getProjects();
+    setProjects(list);
   }
 
-  async function handleDuplicate(id: string) {
-    const copy = localDuplicateProject(id);
-    if (copy && storeMode === "cloud" && user) {
-      await saveCloudProject(copy, user.id);
-    }
-    void refresh();
-  }
+  // Show import option: user is signed in + there are local projects
+  const localProjects = useMemo(() => (user ? getLocalProjects() : []), [user]);
 
-  async function handleImportToCloud() {
-    if (!user) return;
-    setImporting(true);
-    setImportResult(null);
-    const result = await importLocalProjectsToCloud(user.id);
-    setImporting(false);
-    if (result.error) {
-      setImportResult(`Import failed: ${result.error}`);
-    } else {
-      setImportResult(`Imported ${result.imported} project(s) to cloud.`);
+  async function handleImport(project: ProjectKit) {
+    const result = await store.importToCloud(project);
+    setImportStatus((prev) => ({ ...prev, [project.id]: result }));
+    if (result === "imported") {
       void refresh();
     }
   }
 
-  const hasLocalProjects = localGetProjects().length > 0;
-
-  if (!projects.length) {
+  if (!projects.length && !localProjects.length) {
     return (
       <EmptyState
         title="No project kits yet"
@@ -109,25 +69,49 @@ export function ProjectHistoryList() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3">
-        <SyncStatusBadge status={syncStatus} />
-        {storeMode === "cloud" && hasLocalProjects && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void handleImportToCloud()}
-            disabled={importing}
-          >
-            <CloudUpload className="h-4 w-4" />
-            {importing ? "Importing…" : "Import local projects to cloud"}
-          </Button>
-        )}
-        {importResult && (
-          <span className="text-xs text-zinc-600">{importResult}</span>
-        )}
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <h1 className="text-lg font-semibold text-zinc-950">Projects</h1>
+        <SyncStatusBadge />
       </div>
+
+      {/* Import local projects to cloud */}
+      {user && localProjects.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <CloudUpload className="h-4 w-4 text-teal-700" />
+              <span className="text-sm font-semibold text-zinc-950">
+                Import local projects to cloud
+              </span>
+              <Badge variant="amber">{localProjects.length} local</Badge>
+            </div>
+            <p className="mb-3 text-xs text-zinc-500">
+              You have projects in browser storage. Import them to your cloud account for sync across devices.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {localProjects.map((project) => (
+                <Button
+                  key={project.id}
+                  variant="outline"
+                  size="sm"
+                  disabled={importStatus[project.id] === "imported" || importStatus[project.id] === "exists"}
+                  onClick={() => void handleImport(project)}
+                >
+                  <Cloud className="h-3 w-3" />
+                  {importStatus[project.id] === "imported"
+                    ? "Imported ✓"
+                    : importStatus[project.id] === "exists"
+                      ? "Already in cloud"
+                      : importStatus[project.id] === "error"
+                        ? "Failed — retry"
+                        : project.name}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Project list */}
       <div className="grid gap-3">
@@ -139,15 +123,6 @@ export function ProjectHistoryList() {
                   <h2 className="truncate text-base font-semibold text-zinc-950">{project.name}</h2>
                   <Badge variant="teal">{project.input.appType}</Badge>
                   <Badge variant="neutral">{project.input.timeline}</Badge>
-                  {storeMode === "cloud" ? (
-                    <Badge variant="blue" className="gap-1">
-                      <Cloud className="h-3 w-3" /> Cloud
-                    </Badge>
-                  ) : (
-                    <Badge variant="neutral" className="gap-1">
-                      <HardDrive className="h-3 w-3" /> Local
-                    </Badge>
-                  )}
                 </div>
                 <p className="mt-2 line-clamp-2 max-w-4xl text-sm leading-6 text-zinc-600">{project.input.idea}</p>
                 <p className="mt-2 text-xs text-zinc-500">
@@ -164,7 +139,9 @@ export function ProjectHistoryList() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void handleDuplicate(project.id)}
+                  onClick={() => {
+                    void store.duplicateProject(project.id).then(() => refresh());
+                  }}
                 >
                   <Copy className="h-4 w-4" />
                   Duplicate
@@ -176,7 +153,9 @@ export function ProjectHistoryList() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void handleDelete(project.id)}
+                  onClick={() => {
+                    void store.deleteProject(project.id).then(() => refresh());
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete

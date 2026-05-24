@@ -1,16 +1,17 @@
 "use client";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-/**
- * Returns a Supabase browser client if env vars are configured, otherwise null.
- * This is the single entry point for all Supabase interactions.
- * When env vars are missing, the app falls back to local-only mode.
- */
+import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 let _client: SupabaseClient | null | undefined;
 
+/**
+ * Returns a browser Supabase client, or null when env vars are absent.
+ * Safe to call during SSR (returns null).
+ */
 export function getSupabaseClient(): SupabaseClient | null {
+  if (typeof window === "undefined") return null;
+
   if (_client !== undefined) return _client;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,21 +23,18 @@ export function getSupabaseClient(): SupabaseClient | null {
   }
 
   try {
-    _client = createClient(url, key, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
+    _client = createClient(url, key);
     return _client;
   } catch {
+    console.warn("[VibeForge] Failed to create Supabase client. Running local-only.");
     _client = null;
     return null;
   }
 }
 
-/** Quick check: are Supabase env vars configured? */
+/**
+ * Returns true when Supabase env vars are configured.
+ */
 export function isSupabaseConfigured(): boolean {
   return !!(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

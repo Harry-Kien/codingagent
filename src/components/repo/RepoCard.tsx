@@ -3,6 +3,13 @@ import type { RepoRecommendation, RepoTool } from "@/types/vibeforge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+const laneLabel: Record<RepoRecommendation["lane"], string> = {
+  "use-now": "Use now",
+  "use-later": "Use later",
+  "reference-only": "Reference only",
+  "avoid-mvp": "Avoid for MVP",
+};
+
 export function RepoCard({
   tool,
   recommendation,
@@ -25,6 +32,7 @@ export function RepoCard({
         <div className="flex flex-wrap gap-2">
           <Badge variant="blue">{tool.category}</Badge>
           <Badge variant="teal">{tool.howToUse}</Badge>
+          {recommendation ? <Badge variant="amber">{laneLabel[recommendation.lane]}</Badge> : null}
           <Badge variant={tool.productionReadiness === "high" ? "green" : "amber"}>
             {tool.productionReadiness} readiness
           </Badge>

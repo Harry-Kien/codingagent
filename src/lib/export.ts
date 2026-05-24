@@ -1,7 +1,14 @@
 "use client";
 
 import type { McpConnection, ProjectKit } from "@/types/vibeforge";
-import { SECTION_ORDER, ZIP_FILE_MAP, sectionFilename, sectionTitle } from "@/lib/kit-sections";
+import {
+  AGENT_EXPORT_PACKS,
+  type AgentExportPackId,
+  SECTION_ORDER,
+  ZIP_FILE_MAP,
+  sectionFilename,
+  sectionTitle,
+} from "@/lib/kit-sections";
 import { downloadBlob, slugify } from "@/lib/utils";
 
 export function kitToMarkdown(project: ProjectKit) {
@@ -39,7 +46,101 @@ export async function downloadZip(project: ProjectKit) {
   zip.file("REPO_MAP.md", `# Repo Map\n\n${project.sections["repo-tool-map"] ?? ""}\n`);
   zip.file("project.json", JSON.stringify(project, null, 2));
   const blob = await zip.generateAsync({ type: "blob" });
-  downloadBlob(`${slugify(project.name)}-kit.zip`, blob);
+  downloadBlob(`${projectSlug(project)}-kit.zip`, blob);
+}
+
+export async function downloadAgentPack(project: ProjectKit, packId: AgentExportPackId) {
+  const pack = AGENT_EXPORT_PACKS.find((item) => item.id === packId);
+  if (!pack) throw new Error("Unknown export pack.");
+
+  const JSZip = (await import("jszip")).default;
+  const zip = new JSZip();
+  pack.files.forEach((filename) => {
+    zip.file(filename, agentPackFile(project, filename));
+  });
+  zip.file("project.json", JSON.stringify(project, null, 2));
+  const blob = await zip.generateAsync({ type: "blob" });
+  downloadBlob(`${projectSlug(project)}-${pack.id}-pack.zip`, blob);
+}
+
+function agentPackFile(project: ProjectKit, filename: string) {
+  const sections = project.sections;
+  const recommendations = project.repoRecommendations ?? [];
+  const useNowTools = recommendations
+    .filter((item) => item.lane === "use-now")
+    .map((item) => item.tool.name)
+    .join(", ");
+  const nextActions = [
+    ...(project.readinessScore?.nextActions?.length
+      ? project.readinessScore.nextActions
+      : [
+          "Review PROJECT_BRIEF.md and TASKS.md.",
+          "Pick one first milestone and implement the smallest working path.",
+          "Verify Markdown, JSON, ZIP, and agent-pack exports still work.",
+        ]),
+    "Open TASKS.md and complete the first milestone before adding use-later tools.",
+    "Run lint, build, and the manual export checklist after implementation changes.",
+  ];
+  const projectBrief = [
+    sections["product-strategy"] ?? "",
+    "",
+    "## Build Context",
+    `- App type: ${project.input.appType}`,
+    `- Timeline: ${project.input.timeline}`,
+    `- Skill level: ${project.input.skillLevel}`,
+    `- Budget sensitivity: ${project.input.budgetSensitivity}`,
+    `- Use-now tools: ${useNowTools || "None selected"}`,
+  ].join("\n");
+
+  const fileMap: Record<string, string> = {
+    "AGENTS.md": sections["coding-agent-rules"] ?? "",
+    ".clinerules": clineRules(project),
+    ".cursorrules": cursorRules(project),
+    "CLAUDE.md": claudeRules(project),
+    "PROJECT_BRIEF.md": projectBrief,
+    "TASKS.md": sections["task-plan"] ?? "",
+    "TOOLS.md": sections["repo-tool-map"] ?? "",
+    "NEXT_ACTIONS.md": `# Next Actions\n\n${nextActions.map((item) => `- ${item}`).join("\n")}\n`,
+    "CODEX_PROMPTS.md": sections["codex-cline-prompts"] ?? "",
+  };
+  return `# ${filename}\n\n${fileMap[filename]?.trim() ?? ""}\n`;
+}
+
+function projectSlug(project: ProjectKit) {
+  return slugify(project.name || "vibeforge-project") || "vibeforge-project";
+}
+
+function clineRules(project: ProjectKit) {
+  return [
+    "Use the VibeForge kit files as the source of truth.",
+    "Work one small task at a time from TASKS.md.",
+    "Ask before adding paid services, background workers, or repository cloning.",
+    "Preserve Markdown, JSON, and ZIP exports.",
+    `App type: ${project.input.appType}. Timeline: ${project.input.timeline}.`,
+  ].join("\n");
+}
+
+function cursorRules(project: ProjectKit) {
+  return [
+    "Prefer small typed components and local project conventions.",
+    "Keep the root route as the usable builder.",
+    "Do not require API keys for the core flow.",
+    "Treat reference-only repos as architecture references, not source code.",
+    `Primary output: ${project.input.desiredOutput || "structured implementation artifacts"}.`,
+  ].join("\n");
+}
+
+function claudeRules(project: ProjectKit) {
+  return [
+    "# Claude Code Instructions",
+    "",
+    "Read PROJECT_BRIEF.md and TASKS.md before editing.",
+    "Preserve local-first fallback behavior and export formats.",
+    "Do not auto-clone external repositories or execute user-supplied code.",
+    "Report changed files and checks run.",
+    "",
+    `Project: ${project.name}`,
+  ].join("\n");
 }
 
 export function downloadMcpJson(connections: McpConnection[]) {
