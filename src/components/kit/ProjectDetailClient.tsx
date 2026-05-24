@@ -12,6 +12,7 @@ import { ExportButton } from "@/components/ExportButton";
 import { ProjectKitTabs } from "@/components/kit/ProjectKitTabs";
 import { ReadinessScore } from "@/components/kit/ReadinessScore";
 import { RepoRecommendationPanel } from "@/components/repo/RepoRecommendationPanel";
+import { AGENT_EXPORT_PACKS } from "@/lib/kit-sections";
 import { getProject, saveProject } from "@/lib/storage";
 
 export function ProjectDetailClient({ id }: { id: string }) {
@@ -66,6 +67,15 @@ export function ProjectDetailClient({ id }: { id: string }) {
           <ExportButton project={project} mode="markdown" />
           <ExportButton project={project} mode="json" />
           <ExportButton project={project} mode="zip" />
+          {AGENT_EXPORT_PACKS.map((pack) => (
+            <ExportButton
+              key={pack.id}
+              project={project}
+              mode="agent-pack"
+              packId={pack.id}
+              label={pack.label}
+            />
+          ))}
         </div>
       </div>
       <ReadinessScore score={project.readinessScore} />

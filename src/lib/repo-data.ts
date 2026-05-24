@@ -34,6 +34,38 @@ export const repoTools: RepoTool[] = [
     tags: ["agent", "ide", "workflow"],
   },
   {
+    id: "cursor",
+    name: "Cursor",
+    url: "https://www.cursor.com/",
+    category: "Agent workflow",
+    useCase: "AI-first code editor for project kit implementation",
+    whenToUse: "Use when the builder wants editor-native AI changes guided by .cursorrules and task files.",
+    whenNotToUse: "Do not depend on it at runtime or require it for users of the generated product.",
+    howToUse: "external-tool",
+    difficulty: "easy",
+    productionReadiness: "high",
+    riskNotes: "Keep secrets out of prompts and review broad file edits before accepting them.",
+    costNotes: "Subscription or model costs are external to the generated app.",
+    suggestedPrompt: "Read .cursorrules, PROJECT_BRIEF.md, and TASKS.md, then implement the next small task.",
+    tags: ["agent", "ide", "cursor", "workflow"],
+  },
+  {
+    id: "claude-code",
+    name: "Claude Code",
+    url: "https://www.anthropic.com/claude-code",
+    category: "Agent workflow",
+    useCase: "Terminal coding agent using CLAUDE.md project instructions",
+    whenToUse: "Use when the team prefers a terminal coding agent with persistent project memory.",
+    whenNotToUse: "Do not make it part of the app runtime or require it for the core product flow.",
+    howToUse: "external-tool",
+    difficulty: "medium",
+    productionReadiness: "high",
+    riskNotes: "Review commands and file changes before approving tool execution.",
+    costNotes: "Costs depend on the user's Claude plan or configured account.",
+    suggestedPrompt: "Read CLAUDE.md, PROJECT_BRIEF.md, and TASKS.md. Preserve local-first behavior and verify changes.",
+    tags: ["agent", "claude", "workflow"],
+  },
+  {
     id: "superpowers",
     name: "Superpowers",
     url: "https://github.com/obra/superpowers",
@@ -95,7 +127,7 @@ export const repoTools: RepoTool[] = [
     riskNotes: "Row-level security policies must be tested before launch.",
     costNotes: "Free tier can carry MVPs; storage and auth usage may add cost.",
     suggestedPrompt: "Add Supabase only after the local-first flow works, then map local types to Postgres tables.",
-    tags: ["backend", "database", "auth", "saas", "video"],
+    tags: ["backend", "database", "auth", "saas", "dashboard", "internal tool", "video"],
   },
   {
     id: "n8n",
@@ -111,7 +143,7 @@ export const repoTools: RepoTool[] = [
     riskNotes: "Webhook auth and data retention need explicit setup.",
     costNotes: "Cloud or self-hosted infrastructure cost depends on volume.",
     suggestedPrompt: "Design n8n workflows as external integrations with webhook contracts and retry notes.",
-    tags: ["automation", "n8n", "workflow"],
+    tags: ["automation", "n8n", "workflow", "content", "ecommerce", "internal tool"],
   },
   {
     id: "remotion",
@@ -209,14 +241,70 @@ export const repoTools: RepoTool[] = [
     suggestedPrompt: "Keep FFmpeg as a future processing service until user demand for rendered files is proven.",
     tags: ["video", "ffmpeg", "media"],
   },
+  {
+    id: "shopify-api",
+    name: "Shopify Admin API",
+    url: "https://shopify.dev/docs/api/admin",
+    category: "Commerce",
+    useCase: "Store catalog and product listing integration",
+    whenToUse: "Use after a human-reviewed product-copy workflow is validated and store permissions are clear.",
+    whenNotToUse: "Avoid for an MVP that only needs exportable listing drafts or CSV output.",
+    howToUse: "external-tool",
+    difficulty: "medium",
+    productionReadiness: "high",
+    riskNotes: "Store write permissions, rate limits, and merchant approval need careful handling.",
+    costNotes: "API usage is usually tied to the merchant store and app hosting costs.",
+    suggestedPrompt: "Keep Shopify integration behind an explicit use-later milestone with review before writeback.",
+    tags: ["ecommerce", "commerce", "shopify"],
+  },
+  {
+    id: "airtable",
+    name: "Airtable",
+    url: "https://airtable.com/developers/web/api/introduction",
+    category: "Operations",
+    useCase: "Lightweight operational database and approval queue",
+    whenToUse: "Use as an external workflow destination for content, commerce, or internal-tool approvals.",
+    whenNotToUse: "Avoid as the system of record when the product needs strong relational constraints.",
+    howToUse: "external-tool",
+    difficulty: "easy",
+    productionReadiness: "medium",
+    riskNotes: "API limits and permission boundaries should be documented before production use.",
+    costNotes: "Free tier can work for prototypes; team usage can require paid plans.",
+    suggestedPrompt: "Model Airtable as an optional external approval queue, not a required MVP dependency.",
+    tags: ["content", "automation", "internal tool", "operations"],
+  },
+  {
+    id: "playwright",
+    name: "Playwright",
+    url: "https://github.com/microsoft/playwright",
+    category: "Testing",
+    useCase: "End-to-end checks for builder, history, settings, and exports",
+    whenToUse: "Use after the main MVP flow exists and needs repeatable browser verification.",
+    whenNotToUse: "Avoid making broad browser coverage the first task before the core workflow is stable.",
+    howToUse: "install",
+    difficulty: "medium",
+    productionReadiness: "high",
+    riskNotes: "Keep tests focused on user outcomes rather than fragile visual details.",
+    costNotes: "No service cost; CI runtime grows with browser and viewport coverage.",
+    suggestedPrompt: "Add Playwright tests for generation, history navigation, exports, settings, and repo recommendations.",
+    tags: ["testing", "qa", "mcp", "saas", "dashboard", "internal tool"],
+  },
 ];
 
 export function recommendRepos(input: ProjectInput): RepoRecommendation[] {
   const appType = input.appType.toLowerCase();
-  const text = `${input.idea} ${input.desiredOutput ?? ""} ${appType}`.toLowerCase();
+  const text =
+    `${input.idea} ${input.problem ?? ""} ${input.desiredOutput ?? ""} ${appType} ${input.preferredStack.join(" ")}`.toLowerCase();
   const isVideo = text.includes("video") || appType.includes("video");
-  const isAutomation = input.wantsAutomation || text.includes("automation") || appType.includes("n8n");
-  const base = ["nextjs", "shadcn-ui", "supabase", "codex-cli", "superpowers", "cline"];
+  const isAutomation =
+    input.wantsAutomation || text.includes("automation") || text.includes("workflow") || appType.includes("n8n");
+  const isSaas = text.includes("saas") || text.includes("dashboard");
+  const isInternal = text.includes("internal") || text.includes("business tool");
+  const isContent = text.includes("content") || text.includes("caption") || text.includes("copy");
+  const isCommerce =
+    text.includes("commerce") || text.includes("e-commerce") || text.includes("shopify") || text.includes("product listing");
+  const isFastMvp = input.timeline.includes("1 night") || input.timeline.includes("1 day") || input.timeline.includes("7 day");
+  const base = ["nextjs", "shadcn-ui", "supabase", "codex-cli", "cline", "cursor", "claude-code"];
   const ids = new Set(base);
 
   if (isVideo) {
@@ -225,28 +313,49 @@ export function recommendRepos(input: ProjectInput): RepoRecommendation[] {
     );
   }
   if (isAutomation) ids.add("n8n");
+  if (isInternal || isContent) ids.add("airtable");
+  if (isCommerce) ids.add("shopify-api");
+  if (!isFastMvp || isSaas || isInternal || input.wantsMcp) ids.add("playwright");
   if (input.skillLevel === "Developer") ids.add("openhands");
+  if (input.wantsMcp) ids.add("superpowers");
+  if ((input.timeline.includes("1 night") || input.budgetSensitivity === "high") && input.skillLevel !== "Developer") {
+    ids.delete("openhands");
+  }
+  if (!isSaas && !isInternal && input.timeline.includes("1 night")) ids.delete("supabase");
 
   return Array.from(ids)
     .map((id) => repoTools.find((tool) => tool.id === id))
     .filter((tool): tool is RepoTool => Boolean(tool))
     .map((tool) => {
-      let lane: RepoRecommendation["lane"] = "use-directly";
-      if (["codex-cli", "cline", "superpowers"].includes(tool.id)) lane = "agent-workflow";
-      if (["videosos", "storygen-atelier", "short-video-maker", "openhands"].includes(tool.id)) lane = "reference";
-      if (["remotion", "ffmpeg"].includes(tool.id) && isVideo) lane = "future";
-      if (tool.id === "n8n") lane = "future";
+      let lane: RepoRecommendation["lane"] = "use-now";
+      if (["videosos", "storygen-atelier", "short-video-maker"].includes(tool.id)) lane = "reference-only";
+      if (["remotion", "ffmpeg", "n8n", "shopify-api", "airtable"].includes(tool.id)) lane = "use-later";
+      if (tool.id === "n8n" && isAutomation && !isFastMvp) lane = "use-now";
+      if (tool.id === "airtable" && (isInternal || isContent) && input.budgetSensitivity !== "high") lane = "use-now";
+      if (tool.id === "playwright" && isFastMvp) lane = input.wantsMcp ? "use-later" : "avoid-mvp";
+      if (tool.id === "supabase" && isFastMvp && !isSaas && !isInternal) lane = "use-later";
+      if (tool.id === "openhands") lane = input.skillLevel === "Developer" ? "reference-only" : "avoid-mvp";
       return {
         tool,
         lane,
         reason:
-          lane === "reference"
+          lane === "reference-only"
             ? "Useful architecture reference, but not source code to copy into the MVP."
-            : lane === "agent-workflow"
-              ? "Helps turn the generated kit into controlled implementation work."
-              : lane === "future"
-                ? "Relevant after the first validated planning workflow is working."
-                : "Strong fit for the first build path.",
+            : lane === "use-later"
+              ? "Relevant after the first validated workflow is working or when the timeline and budget allow it."
+              : lane === "avoid-mvp"
+                ? "Too much setup or operational risk for the first MVP."
+                : recommendationReason(tool, input),
       };
     });
+}
+
+function recommendationReason(tool: RepoTool, input: ProjectInput) {
+  if (["codex-cli", "cline", "cursor", "claude-code", "superpowers"].includes(tool.id)) {
+    return "Helps turn the generated kit into controlled implementation work.";
+  }
+  if (tool.id === "n8n") return "Matches the requested automation path without embedding a runtime in the app.";
+  if (tool.id === "playwright") return "Verifies the core product workflow before production release.";
+  if (tool.id === "supabase") return "Fits persistence, auth, and production setup while preserving the local-first MVP path.";
+  return `Strong fit for a ${input.appType} first build path.`;
 }

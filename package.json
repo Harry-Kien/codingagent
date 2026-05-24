@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:product": "node scripts/product-checks.mjs",
+    "check:exports": "node scripts/verify-exports.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

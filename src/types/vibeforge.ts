@@ -39,7 +39,7 @@ export type RepoTool = {
 
 export type RepoRecommendation = {
   tool: RepoTool;
-  lane: "use-directly" | "install" | "reference" | "agent-workflow" | "future";
+  lane: "use-now" | "use-later" | "reference-only" | "avoid-mvp";
   reason: string;
 };
 

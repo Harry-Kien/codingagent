@@ -8,12 +8,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/form";
+import { EmptyState } from "@/components/ui/empty-state";
 import { repoTools } from "@/lib/repo-data";
+import { APP_TEMPLATES } from "@/lib/templates";
 import type { RepoTool } from "@/types/vibeforge";
 
 const categories = Array.from(new Set(repoTools.map((t) => t.category))).sort();
 const difficulties: RepoTool["difficulty"][] = ["easy", "medium", "hard"];
 const usageTypes: RepoTool["howToUse"][] = ["install", "clone", "reference-only", "external-tool", "import-workflow"];
+const appTypeLabels = APP_TEMPLATES.map((template) => template.label);
 
 const diffBadge: Record<string, "green" | "amber" | "coral"> = { easy: "green", medium: "amber", hard: "coral" };
 const usageBadge: Record<string, "green" | "blue" | "amber" | "teal" | "neutral"> = {
@@ -29,17 +32,22 @@ export default function RepoMapPage() {
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [usage, setUsage] = useState("");
+  const [appType, setAppType] = useState("");
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
+    const selectedTemplate = APP_TEMPLATES.find((template) => template.label === appType);
+    const appQueries = selectedTemplate ? [selectedTemplate.label, ...selectedTemplate.aliases] : [];
     return repoTools.filter((t) => {
-      if (q && !`${t.name} ${t.useCase} ${t.category} ${t.tags.join(" ")}`.toLowerCase().includes(q)) return false;
+      const haystack = `${t.name} ${t.useCase} ${t.category} ${t.tags.join(" ")}`.toLowerCase();
+      if (q && !haystack.includes(q)) return false;
+      if (appQueries.length && !appQueries.some((query) => haystack.includes(query.toLowerCase()))) return false;
       if (category && t.category !== category) return false;
       if (difficulty && t.difficulty !== difficulty) return false;
       if (usage && t.howToUse !== usage) return false;
       return true;
     });
-  }, [search, category, difficulty, usage]);
+  }, [search, appType, category, difficulty, usage]);
 
   return (
     <div className="space-y-5">
@@ -85,13 +93,26 @@ export default function RepoMapPage() {
           <option value="">All usage types</option>
           {usageTypes.map((u) => <option key={u} value={u}>{u}</option>)}
         </select>
+        <select
+          className="h-10 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-800"
+          value={appType}
+          onChange={(e) => setAppType(e.target.value)}
+        >
+          <option value="">All app types</option>
+          {appTypeLabels.map((label) => <option key={label} value={label}>{label}</option>)}
+        </select>
       </div>
 
       <p className="mt-3 text-xs text-zinc-500">{filtered.length} tool{filtered.length !== 1 ? "s" : ""} found</p>
 
-      {/* Tool Grid */}
-      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((tool) => (
+      {filtered.length === 0 ? (
+        <EmptyState
+          title="No tools match those filters"
+          description="Clear one filter or search for a broader app type such as video, dashboard, automation, content, or commerce."
+        />
+      ) : (
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((tool) => (
           <Card key={tool.id} className="flex flex-col">
             <CardHeader>
               <div className="flex items-start justify-between gap-2">
@@ -147,9 +168,10 @@ export default function RepoMapPage() {
                 </p>
               </div>
             </CardContent>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

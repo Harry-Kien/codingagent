@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Check, FlaskConical, Sparkles } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldError, Input, Label, Select, Textarea } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { ClarificationPanel } from "@/components/ClarificationPanel";
+import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { defaultInput, generateProjectKit, sampleVideoInput } from "@/lib/generator";
 import { clarificationQuestions } from "@/lib/generator";
@@ -18,15 +19,14 @@ import { getActiveProvider, saveProject } from "@/lib/storage";
 import type { ProjectInput } from "@/types/vibeforge";
 
 const appTypes = [
-  "SaaS",
-  "AI tool",
   "AI video app",
-  "Automation tool",
-  "n8n workflow",
-  "Dashboard",
+  "SaaS dashboard",
+  "n8n automation",
+  "Internal business tool",
   "Content tool",
   "E-commerce helper",
-  "Internal business tool",
+  "AI tool",
+  "n8n workflow",
   "Mobile app idea",
   "Other",
 ];
@@ -64,8 +64,22 @@ export function BuilderForm() {
       apiProvidersText: base.apiProviders.join(", "),
     },
   });
-  const watched = form.watch();
-  const questions = useMemo(() => clarificationQuestions(toInput(watched)), [watched]);
+  const watched = useWatch({ control: form.control });
+  const currentValues: BuilderFormValues = {
+    idea: watched.idea ?? "",
+    targetUsers: watched.targetUsers ?? "",
+    problem: watched.problem ?? "",
+    desiredOutput: watched.desiredOutput ?? "",
+    appType: watched.appType ?? base.appType,
+    timeline: watched.timeline ?? base.timeline,
+    skillLevel: watched.skillLevel ?? base.skillLevel,
+    budgetSensitivity: watched.budgetSensitivity ?? base.budgetSensitivity,
+    preferredStackText: watched.preferredStackText ?? base.preferredStack.join(", "),
+    apiProvidersText: watched.apiProvidersText ?? base.apiProviders.join(", "),
+    wantsMcp: watched.wantsMcp ?? base.wantsMcp,
+    wantsAutomation: watched.wantsAutomation ?? base.wantsAutomation,
+  };
+  const questions = clarificationQuestions(toInput(currentValues));
 
   function applySample() {
     const sample = sampleVideoInput();
@@ -78,10 +92,10 @@ export function BuilderForm() {
 
   function chooseDefaults() {
     const sample = {
-      targetUsers: watched.targetUsers || "First-time founders, freelancers, and non-technical builders.",
-      problem: watched.problem || "The user has a rough idea but lacks a structured build plan and agent-ready files.",
+      targetUsers: currentValues.targetUsers || "First-time founders, freelancers, and non-technical builders.",
+      problem: currentValues.problem || "The user has a rough idea but lacks a structured build plan and agent-ready files.",
       desiredOutput:
-        watched.desiredOutput ||
+        currentValues.desiredOutput ||
         "A complete project kit with Markdown files, repo recommendations, tasks, tests, deployment plan, and launch assets.",
     };
     form.setValue("targetUsers", sample.targetUsers);
@@ -126,7 +140,12 @@ export function BuilderForm() {
 
         <ClarificationPanel questions={questions} onDefaults={chooseDefaults} />
 
-        {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div> : null}
+        {error ? (
+          <ErrorState
+            message={error}
+            suggestion="Demo mode does not require API keys. Check local provider settings if provider generation failed."
+          />
+        ) : null}
 
         <form onSubmit={form.handleSubmit(submit)}>
           <Card>
@@ -153,19 +172,19 @@ export function BuilderForm() {
 
               <Segmented
                 label="App type"
-                value={watched.appType}
+                value={currentValues.appType}
                 options={appTypes}
                 onChange={(value) => form.setValue("appType", value)}
               />
               <Segmented
                 label="Timeline"
-                value={watched.timeline}
+                value={currentValues.timeline}
                 options={timelines}
                 onChange={(value) => form.setValue("timeline", value)}
               />
               <Segmented
                 label="Skill level"
-                value={watched.skillLevel}
+                value={currentValues.skillLevel}
                 options={skillLevels}
                 onChange={(value) => form.setValue("skillLevel", value)}
               />
@@ -192,12 +211,12 @@ export function BuilderForm() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <CheckOption
                   label="Include MCP / IDE / CLI integration plan"
-                  checked={watched.wantsMcp}
+                  checked={currentValues.wantsMcp}
                   onChange={(checked) => form.setValue("wantsMcp", checked)}
                 />
                 <CheckOption
                   label="Include automation or n8n workflow plan"
-                  checked={watched.wantsAutomation}
+                  checked={currentValues.wantsAutomation}
                   onChange={(checked) => form.setValue("wantsAutomation", checked)}
                 />
               </div>
@@ -223,7 +242,7 @@ export function BuilderForm() {
             <CardTitle>What you get</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-zinc-700">
-            {["17 structured kit sections", "Repo/tool recommendations", "Markdown, JSON, and ZIP export", "Cost-aware AI model plan", "Codex/Cline prompts", "MCP config snippets"].map((item) => (
+            {["17 structured kit sections", "Repo/tool recommendations", "Markdown, JSON, ZIP, and agent packs", "Cost-aware AI model plan", "Codex, Cline, Cursor, and Claude Code prompts", "MCP config snippets"].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-700" />
                 <span>{item}</span>

@@ -28,19 +28,49 @@ export function sectionFilename(key: string) {
   return SECTION_ORDER.find(([sectionKey]) => sectionKey === key)?.[2] ?? `${key}.md`;
 }
 
-export const ZIP_FILE_MAP: Record<string, string> = {
-  "product-strategy": "PROJECT_BRIEF.md",
-  "mvp-scope": "PRODUCT_STRATEGY.md",
-  "task-plan": "TASKS.md",
-  "coding-agent-rules": "AGENTS.md",
-  "repo-tool-map": "TOOLS.md",
-  "database-schema": "DATABASE_SCHEMA.md",
-  "api-specification": "API_SPEC.md",
-  "ui-screens": "UI_SCREENS.md",
-  "user-flows": "USER_FLOWS.md",
-  "test-plan": "TEST_PLAN.md",
-  "deployment-plan": "DEPLOYMENT_PLAN.md",
-  "security-checklist": "SECURITY_CHECKLIST.md",
-  "codex-cline-prompts": "CODEX_PROMPTS.md",
-  "launch-kit": "LAUNCH_KIT.md",
+export const ZIP_FILE_MAP: Record<string, string> = Object.fromEntries(
+  SECTION_ORDER.map(([key, , filename]) => [key, filename]),
+);
+
+export type AgentExportPackId = "codex" | "cline" | "cursor" | "claude-code";
+
+export type AgentExportPack = {
+  id: AgentExportPackId;
+  label: string;
+  description: string;
+  files: string[];
 };
+
+export const AGENT_EXPORT_PACKS: AgentExportPack[] = [
+  {
+    id: "codex",
+    label: "Codex Pack",
+    description: "Terminal coding workflow with explicit repo rules, tasks, tools, and prompts.",
+    files: [
+      "AGENTS.md",
+      "PROJECT_BRIEF.md",
+      "TASKS.md",
+      "TOOLS.md",
+      "NEXT_ACTIONS.md",
+      "CODEX_PROMPTS.md",
+    ],
+  },
+  {
+    id: "cline",
+    label: "Cline Pack",
+    description: "VS Code agent workflow with Cline rules and implementation tasks.",
+    files: [".clinerules", "PROJECT_BRIEF.md", "TASKS.md", "NEXT_ACTIONS.md"],
+  },
+  {
+    id: "cursor",
+    label: "Cursor Pack",
+    description: "Cursor rules plus the core project brief and next implementation actions.",
+    files: [".cursorrules", "PROJECT_BRIEF.md", "TASKS.md", "NEXT_ACTIONS.md"],
+  },
+  {
+    id: "claude-code",
+    label: "Claude Code Pack",
+    description: "Claude Code project memory and the core planning files.",
+    files: ["CLAUDE.md", "PROJECT_BRIEF.md", "TASKS.md", "NEXT_ACTIONS.md"],
+  },
+];
