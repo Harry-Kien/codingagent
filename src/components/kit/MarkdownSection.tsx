@@ -22,12 +22,14 @@ export function MarkdownSection({
   onSave,
   onSetStatus,
   onRegenerate,
+  isRegenerating = false,
 }: {
   project: ProjectKit;
   sectionKey: string;
   onSave: (sectionKey: string, content: string) => void;
   onSetStatus: (sectionKey: string, status: SectionStatus) => void;
-  onRegenerate: (sectionKey: string) => void;
+  onRegenerate: (sectionKey: string) => void | Promise<void>;
+  isRegenerating?: boolean;
 }) {
   const content = project.sections[sectionKey] ?? "";
   const meta = project.sectionMeta?.[sectionKey];
@@ -98,9 +100,9 @@ export function MarkdownSection({
             </Button>
             <CopyButton text={isEditing ? draft : content} />
             <ExportButton project={project} mode="section" sectionKey={sectionKey} />
-            <Button variant="outline" size="sm" onClick={() => onRegenerate(sectionKey)}>
-              <RefreshCw className="h-4 w-4" />
-              Regenerate
+            <Button variant="outline" size="sm" onClick={() => onRegenerate(sectionKey)} disabled={isRegenerating}>
+              <RefreshCw className={`h-4 w-4 ${isRegenerating ? "animate-spin" : ""}`} />
+              {isRegenerating ? "Regenerating" : "Regenerate"}
             </Button>
           </div>
         </div>

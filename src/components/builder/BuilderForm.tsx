@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Check, FlaskConical, Sparkles } from "lucide-react";
+import { ArrowRight, Check, FlaskConical, Gauge, Sparkles, Zap } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { clarificationQuestions } from "@/lib/generator";
 import { generateKitFromServer, hasServerProvider } from "@/lib/generation-client";
 import { useProjectStore } from "@/lib/use-project-store";
 import { getActiveProvider } from "@/lib/storage";
-import type { ProjectInput } from "@/types/vibeforge";
+import type { GenerationMode, ProjectInput } from "@/types/vibeforge";
 
 const appTypes = [
   "AI video app",
@@ -35,6 +35,11 @@ const appTypes = [
 
 const timelines = ["1 night MVP", "1 day MVP", "7 day build", "30 day product", "Full production system"];
 const skillLevels = ["Non-coder", "Beginner", "Builder", "Developer"];
+const generationModes: Array<{ value: GenerationMode; label: string; description: string }> = [
+  { value: "fast", label: "Fast draft", description: "Lower cost first pass." },
+  { value: "balanced", label: "Balanced", description: "Best default for most kits." },
+  { value: "deep", label: "Deep planning", description: "Richer architecture and tasks." },
+];
 
 const formSchema = z.object({
   idea: z.string().min(12, "Describe the project idea in at least one sentence."),
@@ -49,6 +54,7 @@ const formSchema = z.object({
   apiProvidersText: z.string().optional(),
   wantsMcp: z.boolean(),
   wantsAutomation: z.boolean(),
+  generationMode: z.enum(["fast", "balanced", "deep"]),
 });
 
 type BuilderFormValues = z.infer<typeof formSchema>;
@@ -64,6 +70,7 @@ export function BuilderForm() {
       ...base,
       preferredStackText: base.preferredStack.join(", "),
       apiProvidersText: base.apiProviders.join(", "),
+      generationMode: "balanced",
     },
   });
   const watched = useWatch({ control: form.control });
@@ -80,6 +87,7 @@ export function BuilderForm() {
     apiProvidersText: watched.apiProvidersText ?? base.apiProviders.join(", "),
     wantsMcp: watched.wantsMcp ?? base.wantsMcp,
     wantsAutomation: watched.wantsAutomation ?? base.wantsAutomation,
+    generationMode: watched.generationMode ?? "balanced",
   };
   const questions = clarificationQuestions(toInput(currentValues));
 
@@ -89,6 +97,7 @@ export function BuilderForm() {
       ...sample,
       preferredStackText: sample.preferredStack.join(", "),
       apiProvidersText: sample.apiProviders.join(", "),
+      generationMode: "balanced",
     });
   }
 
@@ -113,13 +122,23 @@ export function BuilderForm() {
     try {
       const input = toInput(values);
       const provider = getActiveProvider();
+      const generationMode = values.generationMode;
       // Prefer server-side generation when a provider is configured.
       let project = hasServerProvider(provider)
-        ? await generateKitFromServer(input, provider).catch(() => null)
+        ? await generateKitFromServer(input, provider, generationMode).catch(() => null)
         : null;
       // Fall back to client-side (demo mode) generation.
       if (!project) {
         project = await generateProjectKit(input);
+        project = {
+          ...project,
+          generation: {
+            mode: generationMode,
+            source: "demo",
+            generatedAt: new Date().toISOString(),
+            fallbackReason: provider ? "Provider generation failed; demo fallback was used." : "No active provider was used.",
+          },
+        };
       }
       await store.saveProject(project);
       router.push(`/projects/${project.id}`);
@@ -152,6 +171,7 @@ export function BuilderForm() {
         </div>
 
         <ClarificationPanel questions={questions} onDefaults={chooseDefaults} />
+        <AiModeStatus generationMode={currentValues.generationMode} />
 
         {error ? (
           <ErrorState
@@ -201,6 +221,30 @@ export function BuilderForm() {
                 options={skillLevels}
                 onChange={(value) => form.setValue("skillLevel", value)}
               />
+
+              <div>
+                <Label>Generation mode</Label>
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  {generationModes.map((mode) => (
+                    <button
+                      type="button"
+                      key={mode.value}
+                      onClick={() => form.setValue("generationMode", mode.value)}
+                      className={`rounded-lg border p-3 text-left transition ${
+                        currentValues.generationMode === mode.value
+                          ? "border-teal-700 bg-teal-50 text-teal-950"
+                          : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 text-sm font-semibold">
+                        {mode.value === "deep" ? <Gauge className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
+                        {mode.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-zinc-500">{mode.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
@@ -255,7 +299,7 @@ export function BuilderForm() {
             <CardTitle>What you get</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-zinc-700">
-            {["17 structured kit sections", "Repo/tool recommendations", "Markdown, JSON, ZIP, and agent packs", "Cost-aware AI model plan", "Codex, Cline, Cursor, and Claude Code prompts", "MCP config snippets"].map((item) => (
+            {["18 structured kit sections", "Repo/tool recommendations", "Markdown, JSON, ZIP, and agent packs", "Cost-aware AI model plan", "Codex, Cline, Cursor, and Claude Code prompts", "MCP config snippets"].map((item) => (
               <div key={item} className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-700" />
                 <span>{item}</span>
@@ -272,6 +316,27 @@ export function BuilderForm() {
           </CardContent>
         </Card>
       </aside>
+    </div>
+  );
+}
+
+function AiModeStatus({ generationMode }: { generationMode: GenerationMode }) {
+  const provider = getActiveProvider();
+  const active = hasServerProvider(provider);
+  return (
+    <div className={`rounded-lg border p-3 text-sm ${active ? "border-teal-200 bg-teal-50 text-teal-900" : "border-zinc-200 bg-zinc-50 text-zinc-700"}`}>
+      <div className="flex flex-wrap items-center gap-2 font-medium">
+        <Sparkles className="h-4 w-4" />
+        AI mode: {active ? `${provider?.providerName ?? "Provider"} active` : "Demo fallback"}
+        <Badge variant={generationMode === "deep" ? "amber" : generationMode === "fast" ? "blue" : "teal"}>
+          {generationMode === "deep" ? "Deep planning" : generationMode === "fast" ? "Fast draft" : "Balanced"}
+        </Badge>
+      </div>
+      <p className="mt-1 text-xs leading-5 opacity-80">
+        {active
+          ? `Generation will use ${provider?.defaultModel || provider?.strongModel || provider?.cheapModel || "your configured model"} through server routes.`
+          : "No active provider is available, so VibeForge will generate a deterministic demo kit."}
+      </p>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { SECTION_ORDER } from "@/lib/kit-sections";
 
 const budgetSensitivitySchema = z.enum(["low", "medium", "high"]);
+export const generationModeSchema = z.enum(["fast", "balanced", "deep"]);
 const sectionKeys = SECTION_ORDER.map(([key]) => key) as [string, ...string[]];
 export const sectionKeySchema = z.enum(sectionKeys);
 
@@ -78,6 +79,15 @@ const repoRecommendationSchema = z.object({
   reason: z.string(),
 }).passthrough();
 
+const generationMetadataSchema = z.object({
+  mode: generationModeSchema,
+  source: z.enum(["demo", "provider"]),
+  providerName: z.string().optional(),
+  model: z.string().optional(),
+  generatedAt: z.string(),
+  fallbackReason: z.string().optional(),
+}).passthrough();
+
 export const projectKitSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -86,6 +96,7 @@ export const projectKitSchema = z.object({
   favorites: z.record(z.string(), z.boolean()),
   repoRecommendations: z.array(repoRecommendationSchema),
   readinessScore: readinessScoreSchema,
+  generation: generationMetadataSchema.optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   lastOpenedAt: z.string().optional(),
@@ -94,14 +105,23 @@ export const projectKitSchema = z.object({
 export const generateKitRequestSchema = z.object({
   input: projectInputSchema,
   provider: providerSettingsSchema.optional().nullable(),
+  providerProfileId: z.string().min(1).optional().nullable(),
+  generationMode: generationModeSchema.optional().default("balanced"),
 });
 
 export const regenerateSectionRequestSchema = z.object({
   project: projectKitSchema,
   sectionKey: sectionKeySchema,
   provider: providerSettingsSchema.optional().nullable(),
+  providerProfileId: z.string().min(1).optional().nullable(),
+  generationMode: generationModeSchema.optional().default("balanced"),
 });
 
 export const improveSectionRequestSchema = regenerateSectionRequestSchema.extend({
   instruction: z.string().max(1200).optional().default("Improve this section while preserving concrete, exportable guidance."),
+});
+
+export const testProviderRequestSchema = z.object({
+  provider: providerSettingsSchema.optional().nullable(),
+  providerProfileId: z.string().min(1).optional().nullable(),
 });

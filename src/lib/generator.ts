@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  GenerationMetadata,
   ProjectInput,
   ProjectKit,
   ReadinessScore,
@@ -28,7 +29,12 @@ export async function generateProjectKit(input: ProjectInput): Promise<ProjectKi
   return generateMockKit(input);
 }
 
-export function buildProjectKit(input: ProjectInput, sections: Record<string, string>, name?: string): ProjectKit {
+export function buildProjectKit(
+  input: ProjectInput,
+  sections: Record<string, string>,
+  name?: string,
+  generation?: GenerationMetadata,
+): ProjectKit {
   const now = new Date().toISOString();
   return {
     id: uid("kit"),
@@ -38,6 +44,7 @@ export function buildProjectKit(input: ProjectInput, sections: Record<string, st
     favorites: {},
     repoRecommendations: recommendRepos(input),
     readinessScore: scoreProject(input),
+    generation,
     createdAt: now,
     updatedAt: now,
     lastOpenedAt: now,
@@ -86,6 +93,12 @@ export function generateMockKit(input: ProjectInput): ProjectKit {
     favorites: {},
     repoRecommendations,
     readinessScore: scoreProject(input),
+    generation: {
+      mode: "balanced",
+      source: "demo",
+      generatedAt: now,
+      fallbackReason: "No active provider was used.",
+    },
     createdAt: now,
     updatedAt: now,
     lastOpenedAt: now,

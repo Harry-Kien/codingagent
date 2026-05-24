@@ -4,11 +4,13 @@ import { useState } from "react";
 import type { ProjectKit, SectionStatus } from "@/types/vibeforge";
 import { SECTION_ORDER } from "@/lib/kit-sections";
 import { regenerateSection } from "@/lib/generator";
+import { hasServerProvider, regenerateSectionFromServer } from "@/lib/generation-client";
 import {
   normalizeProjectWorkspace,
   updateSectionContent,
   updateSectionStatus,
 } from "@/lib/section-workspace";
+import { getActiveProvider } from "@/lib/storage";
 import { useProjectStore } from "@/lib/use-project-store";
 import { MarkdownSection } from "@/components/kit/MarkdownSection";
 
@@ -21,6 +23,7 @@ export function ProjectKitTabs({
 }) {
   const [project, setProject] = useState(() => normalizeProjectWorkspace(initialProject));
   const [active, setActive] = useState<string>(SECTION_ORDER[0][0]);
+  const [regenerating, setRegenerating] = useState("");
   const store = useProjectStore();
 
   function update(next: ProjectKit, isRegeneration = false) {
@@ -45,8 +48,19 @@ export function ProjectKitTabs({
     update(updateSectionStatus(project, sectionKey, status));
   }
 
-  function refresh(sectionKey: string) {
-    update(regenerateSection(project, sectionKey), true);
+  async function refresh(sectionKey: string) {
+    setRegenerating(sectionKey);
+    try {
+      const provider = getActiveProvider();
+      const generationMode = project.generation?.mode ?? "balanced";
+      const serverProject = hasServerProvider(provider)
+        ? await regenerateSectionFromServer(project, sectionKey, provider, generationMode).catch(() => null)
+        : null;
+
+      update(normalizeProjectWorkspace(serverProject ?? regenerateSection(project, sectionKey)), true);
+    } finally {
+      setRegenerating("");
+    }
   }
 
   function sectionStatus(sectionKey: string) {
@@ -95,6 +109,7 @@ export function ProjectKitTabs({
         onSave={saveSection}
         onSetStatus={setSectionStatus}
         onRegenerate={refresh}
+        isRegenerating={regenerating === active}
       />
     </div>
   );

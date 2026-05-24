@@ -12,6 +12,7 @@ import { ExportButton } from "@/components/ExportButton";
 import { SyncStatusBadge } from "@/components/auth/SyncStatusBadge";
 import { ProjectKitTabs } from "@/components/kit/ProjectKitTabs";
 import { ReadinessScore } from "@/components/kit/ReadinessScore";
+import { StartBuildPanel } from "@/components/kit/StartBuildPanel";
 import { RepoRecommendationPanel } from "@/components/repo/RepoRecommendationPanel";
 import { AGENT_EXPORT_PACKS } from "@/lib/kit-sections";
 import { useProjectStore } from "@/lib/use-project-store";
@@ -33,7 +34,7 @@ export function ProjectDetailClient({ id }: { id: string }) {
         if (cancelled) return;
         if (found) {
           const next = { ...found, lastOpenedAt: new Date().toISOString() };
-          // Only persist lastOpenedAt — this is a trivial update, no version snapshot.
+          // Only persist lastOpenedAt; this is a trivial update, no version snapshot.
           void s.saveProject(next);
           setProject(next);
         } else {
@@ -74,6 +75,13 @@ export function ProjectDetailClient({ id }: { id: string }) {
             <Badge variant="teal">{project.input.appType}</Badge>
             <Badge variant="blue">{project.input.timeline}</Badge>
             <Badge variant="amber">{project.input.budgetSensitivity} budget sensitivity</Badge>
+            {project.generation ? (
+              <Badge variant={project.generation.source === "provider" ? "green" : "neutral"}>
+                {project.generation.source === "provider"
+                  ? `AI: ${project.generation.providerName ?? "Provider"}`
+                  : "AI: Demo fallback"}
+              </Badge>
+            ) : null}
             <SyncStatusBadge />
           </div>
           <h1 className="mt-3 text-2xl font-semibold text-zinc-950">{project.name}</h1>
@@ -95,6 +103,7 @@ export function ProjectDetailClient({ id }: { id: string }) {
         </div>
       </div>
       <ReadinessScore score={project.readinessScore} />
+      <StartBuildPanel project={project} />
       <RepoRecommendationPanel recommendations={project.repoRecommendations} />
       <ProjectKitTabs initialProject={project} onProjectChange={setProject} />
     </div>

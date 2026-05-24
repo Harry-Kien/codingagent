@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { KeyRound, Plus, Save, Trash2 } from "lucide-react";
+import { KeyRound, PlugZap, Plus, Save, Trash2 } from "lucide-react";
 import type { ProviderSettings } from "@/types/vibeforge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { getProviders, saveProviders } from "@/lib/storage";
+import { testProvider } from "@/lib/generation-client";
 import { uid } from "@/lib/utils";
 
 const providerTypes: ProviderSettings["providerType"][] = [
@@ -21,6 +22,7 @@ const providerTypes: ProviderSettings["providerType"][] = [
 
 export function ProviderSettingsForm() {
   const [providers, setProviders] = useState<ProviderSettings[]>([]);
+  const [testResults, setTestResults] = useState<Record<string, { status: "testing" | "ok" | "failed"; message: string }>>({});
 
   useEffect(() => {
     const timer = window.setTimeout(() => setProviders(getProviders()), 0);
@@ -57,6 +59,21 @@ export function ProviderSettingsForm() {
     persist(providers.map((provider) => (provider.id === id ? { ...provider, ...patch } : provider)));
   }
 
+  async function testConnection(provider: ProviderSettings) {
+    setTestResults((current) => ({
+      ...current,
+      [provider.id]: { status: "testing", message: "Testing provider..." },
+    }));
+    const result = await testProvider(provider);
+    setTestResults((current) => ({
+      ...current,
+      [provider.id]: {
+        status: result.ok ? "ok" : "failed",
+        message: result.model ? `${result.message} Model: ${result.model}` : result.message,
+      },
+    }));
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -73,7 +90,8 @@ export function ProviderSettingsForm() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          API keys are saved only in your browser. Production should move provider calls to server routes with encrypted storage and rate limits.
+          API keys are saved only in your browser and sent to server routes only for generation or connection tests.
+          Production should add encrypted storage, auth, rate limits, and usage logs.
         </div>
         {providers.map((provider) => (
           <div key={provider.id} className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
@@ -87,12 +105,29 @@ export function ProviderSettingsForm() {
                 <Button variant="outline" size="sm" onClick={() => update(provider.id, { enabled: !provider.enabled })}>
                   {provider.enabled ? "Disable" : "Enable"}
                 </Button>
+                <Button variant="secondary" size="sm" onClick={() => void testConnection(provider)}>
+                  <PlugZap className="h-4 w-4" />
+                  Test connection
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => persist(providers.filter((item) => item.id !== provider.id))}>
                   <Trash2 className="h-4 w-4" />
                   Delete
                 </Button>
               </div>
             </div>
+            {testResults[provider.id] ? (
+              <div
+                className={`mb-4 rounded-lg border p-3 text-sm ${
+                  testResults[provider.id].status === "ok"
+                    ? "border-green-200 bg-green-50 text-green-800"
+                    : testResults[provider.id].status === "testing"
+                      ? "border-blue-200 bg-blue-50 text-blue-800"
+                      : "border-red-200 bg-red-50 text-red-800"
+                }`}
+              >
+                {testResults[provider.id].message}
+              </div>
+            ) : null}
             <div className="grid gap-4 md:grid-cols-3">
               <Field label="Provider name" value={provider.providerName} onChange={(value) => update(provider.id, { providerName: value })} />
               <div>

@@ -15,6 +15,17 @@ export type ProjectInput = {
   wantsAutomation: boolean;
 };
 
+export type GenerationMode = "fast" | "balanced" | "deep";
+
+export type GenerationMetadata = {
+  mode: GenerationMode;
+  source: "demo" | "provider";
+  providerName?: string;
+  model?: string;
+  generatedAt: string;
+  fallbackReason?: string;
+};
+
 export type RepoTool = {
   id: string;
   name: string;
@@ -80,6 +91,7 @@ export type ProjectKit = {
   sectionMeta?: Record<string, SectionWorkspaceState>;
   repoRecommendations: RepoRecommendation[];
   readinessScore: ReadinessScore;
+  generation?: GenerationMetadata;
   createdAt: string;
   updatedAt: string;
   lastOpenedAt?: string;

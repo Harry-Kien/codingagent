@@ -1,4 +1,4 @@
-import type { ProjectInput, ProjectKit, ProviderSettings } from "@/types/vibeforge";
+import type { GenerationMode, ProjectInput, ProjectKit, ProviderSettings } from "@/types/vibeforge";
 import { SECTION_ORDER, sectionTitle } from "@/lib/kit-sections";
 import {
   buildProjectKit,
@@ -23,26 +23,67 @@ type ProviderJson = {
   section?: unknown;
 };
 
-export async function generateProjectKitServer(input: ProjectInput, provider?: ProviderSettings | null) {
+type ChatCompletionResult = {
+  content: string | null;
+  model: string;
+  error?: string;
+};
+
+type ProviderGenerationResult = {
+  project: ProjectKit | null;
+  error?: string;
+  model?: string;
+};
+
+type ProviderSectionResult = {
+  content: string | null;
+  error?: string;
+  model?: string;
+};
+
+export async function generateProjectKitServer(
+  input: ProjectInput,
+  provider?: ProviderSettings | null,
+  generationMode: GenerationMode = "balanced",
+) {
   if (isProviderUsable(provider)) {
-    const generated = await generateWithProvider(input, provider);
-    if (generated) return generated;
+    const generated = await generateWithProvider(input, provider, generationMode);
+    if (generated?.project) return generated.project;
+
+    return {
+      ...generateMockKit(input),
+      generation: {
+        mode: generationMode,
+        source: "demo" as const,
+        generatedAt: new Date().toISOString(),
+        fallbackReason: generated?.error ?? "Provider generation failed; demo fallback was used.",
+      },
+    };
   }
 
-  return generateMockKit(input);
+  return {
+    ...generateMockKit(input),
+    generation: {
+      mode: generationMode,
+      source: "demo" as const,
+      generatedAt: new Date().toISOString(),
+      fallbackReason: "No active provider was used.",
+    },
+  };
 }
 
 export async function regenerateSectionServer(
   project: ProjectKit,
   sectionKey: string,
   provider?: ProviderSettings | null,
+  generationMode: GenerationMode = "balanced",
 ) {
   if (!isSectionKey(sectionKey)) return project;
 
   if (isProviderUsable(provider)) {
-    const content = await generateSectionWithProvider(project, sectionKey, provider);
-    if (content) {
-      return withSection(project, sectionKey, content);
+    const result = await generateSectionWithProvider(project, sectionKey, provider, undefined, generationMode);
+    if (result.content) {
+      return withSection(project, sectionKey, result.content);
     }
   }
 
@@ -54,13 +95,14 @@ export async function improveSectionServer(
   sectionKey: string,
   instruction: string,
   provider?: ProviderSettings | null,
+  generationMode: GenerationMode = "balanced",
 ) {
   if (!isSectionKey(sectionKey)) return project;
 
   if (isProviderUsable(provider)) {
-    const content = await generateSectionWithProvider(project, sectionKey, provider, instruction);
-    if (content) {
-      return withSection(project, sectionKey, content);
+    const result = await generateSectionWithProvider(project, sectionKey, provider, instruction, generationMode);
+    if (result.content) {
+      return withSection(project, sectionKey, result.content);
     }
   }
 
@@ -84,8 +126,34 @@ function isSectionKey(sectionKey: string) {
   return SECTION_KEYS.some((key) => key === sectionKey);
 }
 
-async function generateWithProvider(input: ProjectInput, provider: ProviderSettings) {
-  const content = await requestChatCompletion(provider, [
+export async function testProviderConnection(provider?: ProviderSettings | null) {
+  if (!isProviderUsable(provider)) {
+    return { ok: false, message: "Provider is disabled, missing base URL, or missing API key." };
+  }
+
+  const model = selectModel(provider, "fast");
+  const result = await requestChatCompletion(provider, [
+    { role: "system", content: "Return only valid JSON." },
+    { role: "user", content: 'Return {"ok":true,"message":"connected"}.' },
+  ], "fast");
+
+  if (!result.content) {
+    return {
+      ok: false,
+      message: result.error ?? "Provider request failed. Check the key, credits, model, and base URL.",
+      model,
+    };
+  }
+
+  return { ok: true, message: "Provider connected successfully.", model };
+}
+
+async function generateWithProvider(
+  input: ProjectInput,
+  provider: ProviderSettings,
+  generationMode: GenerationMode,
+): Promise<ProviderGenerationResult> {
+  const result = await requestChatCompletion(provider, [
     { role: "system", content: SYSTEM_PROMPT },
     {
       role: "user",
@@ -94,15 +162,32 @@ Use exactly these section keys and no alternatives: ${SECTION_KEYS.join(", ")}.
 Every section value must be useful Markdown, not placeholders.
 
 Project input:
-${JSON.stringify(input, null, 2)}`,
-    },
-  ]);
+${JSON.stringify(input, null, 2)}
 
-  const parsed = parseProviderJson(content);
-  if (!parsed) return null;
+Generation mode: ${generationModeInstruction(generationMode)}`,
+    },
+  ], generationMode);
+
+  const parsed = parseProviderJson(result.content);
+  if (!parsed) {
+    return {
+      project: null,
+      error: result.error ?? "Provider returned invalid JSON. Demo fallback was used.",
+      model: result.model,
+    };
+  }
 
   const sections = sectionsFromUnknown(parsed.sections);
-  return buildProjectKit(input, sections, typeof parsed.name === "string" ? parsed.name : inferName(input.idea));
+  return {
+    project: buildProjectKit(input, sections, typeof parsed.name === "string" ? parsed.name : inferName(input.idea), {
+      mode: generationMode,
+      source: "provider",
+      providerName: provider.providerName,
+      model: result.model,
+      generatedAt: new Date().toISOString(),
+    }),
+    model: result.model,
+  };
 }
 
 async function generateSectionWithProvider(
@@ -110,8 +195,9 @@ async function generateSectionWithProvider(
   sectionKey: string,
   provider: ProviderSettings,
   instruction?: string,
-) {
-  const content = await requestChatCompletion(provider, [
+  generationMode: GenerationMode = "balanced",
+): Promise<ProviderSectionResult> {
+  const result = await requestChatCompletion(provider, [
     { role: "system", content: SYSTEM_PROMPT },
     {
       role: "user",
@@ -132,39 +218,91 @@ ${JSON.stringify(
   2,
 )}`,
     },
-  ]);
+  ], generationMode);
 
-  const parsed = parseProviderJson(content);
-  if (!parsed) return null;
-  if (typeof parsed.section === "string" && parsed.section.trim()) return parsed.section;
+  const parsed = parseProviderJson(result.content);
+  if (!parsed) return { content: null, error: result.error ?? "Provider returned invalid JSON.", model: result.model };
+  if (typeof parsed.section === "string" && parsed.section.trim()) {
+    return { content: parsed.section, model: result.model };
+  }
 
   const sections = sectionsFromUnknown(parsed.sections);
-  return sections[sectionKey] || null;
+  return { content: sections[sectionKey] || null, model: result.model };
 }
 
 async function requestChatCompletion(
   provider: ProviderSettings,
   messages: Array<{ role: "system" | "user"; content: string }>,
-) {
-  const model = provider.defaultModel || provider.strongModel || provider.cheapModel;
+  generationMode: GenerationMode = "balanced",
+): Promise<ChatCompletionResult> {
+  const model = selectModel(provider, generationMode);
 
   try {
     if (provider.providerType === "ollama") {
-      return await requestOllama(provider, messages, model);
+      return { content: await requestOllama(provider, messages, model), model };
     }
 
     if (provider.providerType === "gemini") {
-      return await requestGemini(provider, messages, model);
+      return { content: await requestGemini(provider, messages, model), model };
     }
 
     if (provider.providerType === "anthropic-compatible") {
-      return await requestAnthropic(provider, messages, model);
+      return { content: await requestAnthropic(provider, messages, model), model };
     }
 
-    return await requestOpenAiCompatible(provider, messages, model);
-  } catch {
-    return null;
+    return { content: await requestOpenAiCompatible(provider, messages, model), model };
+  } catch (error) {
+    return { content: null, model, error: providerErrorMessage(error) };
   }
+}
+
+function selectModel(provider: ProviderSettings, generationMode: GenerationMode) {
+  if (generationMode === "fast") {
+    return provider.cheapModel || provider.defaultModel || provider.strongModel;
+  }
+  if (generationMode === "deep") {
+    return provider.strongModel || provider.defaultModel || provider.cheapModel;
+  }
+  return provider.defaultModel || provider.strongModel || provider.cheapModel;
+}
+
+function generationModeInstruction(generationMode: GenerationMode) {
+  if (generationMode === "fast") {
+    return "Fast draft. Keep output concise, concrete, and optimized for speed and lower cost.";
+  }
+  if (generationMode === "deep") {
+    return "Deep planning. Produce richer architecture, smaller implementation tasks, explicit tradeoffs, and production-ready detail.";
+  }
+  return "Balanced. Produce practical detail with good coverage while avoiding unnecessary scope.";
+}
+
+async function assertProviderResponse(response: Response) {
+  if (response.ok) return;
+  const body = await response.text().catch(() => "");
+  throw new Error(classifyProviderResponse(response.status, body));
+}
+
+function classifyProviderResponse(status: number, body: string) {
+  const text = body.toLowerCase();
+  if (status === 401 || status === 403) return "Provider rejected the API key or permissions.";
+  if (status === 404 || text.includes("model")) return "Provider model was not found. Check the model ID.";
+  if (status === 408 || status === 504) return "Provider timed out. Try a faster model or lower token limit.";
+  if (status === 429) return "Provider rate limit or quota was reached. Check credits and limits.";
+  if (status >= 500) return "Provider service is unavailable. Try again shortly.";
+  if (text.includes("quota") || text.includes("credit") || text.includes("billing")) {
+    return "Provider quota, credits, or billing limit was reached.";
+  }
+  return "Provider request failed. Check base URL, model, key, and JSON support.";
+}
+
+function providerErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
+      return "Provider request timed out. Try Fast mode, a lower token limit, or another model.";
+    }
+    return error.message;
+  }
+  return "Provider request failed. Check key, credits, model, and base URL.";
 }
 
 async function requestOpenAiCompatible(
@@ -191,7 +329,7 @@ async function requestOpenAiCompatible(
     }),
   });
 
-  if (!response.ok) return null;
+  await assertProviderResponse(response);
   const json = await response.json();
   const content = json?.choices?.[0]?.message?.content;
   return typeof content === "string" ? content : null;
@@ -221,7 +359,7 @@ async function requestOllama(
     }),
   });
 
-  if (!response.ok) return null;
+  await assertProviderResponse(response);
   const json = await response.json();
   const content = json?.message?.content;
   return typeof content === "string" ? content : null;
@@ -255,7 +393,7 @@ async function requestGemini(
     }),
   });
 
-  if (!response.ok) return null;
+  await assertProviderResponse(response);
   const json = await response.json();
   const content = json?.candidates?.[0]?.content?.parts?.[0]?.text;
   return typeof content === "string" ? content : null;
@@ -291,7 +429,7 @@ async function requestAnthropic(
     }),
   });
 
-  if (!response.ok) return null;
+  await assertProviderResponse(response);
   const json = await response.json();
   const content = json?.content?.[0]?.text;
   return typeof content === "string" ? content : null;
