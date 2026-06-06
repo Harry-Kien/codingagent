@@ -20,7 +20,7 @@ export async function cloudGetProjects(): Promise<ProjectKit[]> {
     console.error("[VibeForge] cloudGetProjects:", error.message);
     return [];
   }
-  return (data ?? []).map(rowToKit);
+  return ((data ?? []) as ProjectRow[]).map(rowToKit);
 }
 
 export async function cloudGetProject(id: string): Promise<ProjectKit | null> {
@@ -37,7 +37,7 @@ export async function cloudGetProject(id: string): Promise<ProjectKit | null> {
     console.error("[VibeForge] cloudGetProject:", error.message);
     return null;
   }
-  return data ? rowToKit(data) : null;
+  return data ? rowToKit(data as ProjectRow) : null;
 }
 
 export async function cloudSaveProject(project: ProjectKit, userId: string): Promise<boolean> {
@@ -121,8 +121,22 @@ export async function cloudImportProject(
 // Row <-> Kit mapping
 // ---------------------------------------------------------------------------
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function rowToKit(row: any): ProjectKit {
+type ProjectRow = {
+  id: string;
+  name: string;
+  input_json: ProjectKit["input"];
+  sections_json: ProjectKit["sections"];
+  favorites_json?: ProjectKit["favorites"] | null;
+  section_meta_json?: ProjectKit["sectionMeta"] | null;
+  repo_recommendations_json?: ProjectKit["repoRecommendations"] | null;
+  readiness_json: ProjectKit["readinessScore"];
+  generation_json?: ProjectKit["generation"] | null;
+  created_at: string;
+  updated_at: string;
+  last_opened_at?: string | null;
+};
+
+function rowToKit(row: ProjectRow): ProjectKit {
   return {
     id: row.id,
     name: row.name,

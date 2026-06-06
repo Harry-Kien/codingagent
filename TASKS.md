@@ -35,5 +35,5 @@
 - [x] Run dependency install.
 - [x] Run lint.
 - [x] Run build.
-- [ ] Run tests if available.
-- [ ] Start dev server and manually verify the core flow.
+- [x] Run tests if available.
+- [x] Start dev server and manually verify the core flow.

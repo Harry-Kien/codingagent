@@ -10,8 +10,8 @@ export type StoreMode = "local" | "cloud";
 
 /**
  * Unified project store hook.
- * - Unauthenticated users → localStorage (local)
- * - Authenticated users → Supabase (cloud) with localStorage fallback on failure
+ * - Unauthenticated users -> localStorage (local)
+ * - Authenticated users -> Supabase (cloud) with localStorage fallback on failure
  *
  * API keys are NEVER included in cloud operations.
  */

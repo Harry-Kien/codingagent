@@ -1,273 +1,163 @@
-import { test, expect } from "@playwright/test";
-
-/**
- * VibeForge E2E — Core Builder Flow
- *
- * Exercises the main user journey:
- *   Homepage → Fill form → Generate kit → Review tabs → Export → History → Repo Map → Settings
- *
- * Uses demo/mock mode (no provider keys required).
- */
+import { readFile } from "node:fs/promises";
+import { test, expect, type Page } from "@playwright/test";
+import JSZip from "jszip";
 
 const SAMPLE_IDEA =
-  "I want to build an AI video app for small shops. The user enters a product description and the app creates a 7-day video content plan, scripts, captions, and prompts for Veo/Gemini/Sora. I am a non-coder and want the full product with low API cost, MCP integrations, and a workflow that Codex/Cline/Antigravity can continue building.";
+  "I want to build an AI video app for small shops. The user enters a product description and the app creates a 7-day video content plan, scripts, captions, and prompts for Veo/Gemini/Sora. I am a non-coder and want the full product with low API cost, MCP integrations, and a workflow that Codex/Cline can continue building.";
 
-// Helper: scope locators to <main> to avoid matching hidden mobile nav elements
-function main(page: import("@playwright/test").Page) {
+function main(page: Page) {
   return page.locator("main");
 }
 
-// ---------------------------------------------------------------------------
-// 1. Homepage — Builder form renders
-// ---------------------------------------------------------------------------
-test.describe("Homepage / Builder", () => {
-  test("should display the builder intake form", async ({ page }) => {
+async function generateDemoKit(page: Page) {
+  await page.goto("/");
+  await page.getByLabel(/project idea/i).fill(SAMPLE_IDEA);
+  await page.getByRole("button", { name: /generate project kit/i }).click();
+  await page.waitForURL(/\/projects\/.+/, { timeout: 60_000 });
+  await expect(main(page).getByRole("heading", { level: 1 })).toBeVisible();
+}
+
+async function downloadText(page: Page, buttonName: RegExp) {
+  const [download] = await Promise.all([
+    page.waitForEvent("download", { timeout: 10_000 }),
+    main(page).getByRole("button", { name: buttonName }).first().click(),
+  ]);
+  const path = await download.path();
+  expect(path).toBeTruthy();
+  return readFile(path as string, "utf8");
+}
+
+async function downloadBuffer(page: Page, buttonName: RegExp) {
+  const [download] = await Promise.all([
+    page.waitForEvent("download", { timeout: 10_000 }),
+    main(page).getByRole("button", { name: buttonName }).first().click(),
+  ]);
+  const path = await download.path();
+  expect(path).toBeTruthy();
+  return readFile(path as string);
+}
+
+test.describe("Public beta core flow", () => {
+  test("keeps the root route as the usable builder", async ({ page }) => {
     await page.goto("/");
-    await expect(main(page).getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(main(page).getByRole("heading", { level: 1 })).toContainText(/project kit/i);
     await expect(page.getByLabel(/project idea/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /generate/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /generate project kit/i })).toBeVisible();
+
+    await page.getByRole("button", { name: /load ai video sample/i }).click();
+    await expect(page.getByLabel(/project idea/i)).toHaveValue(/AI video app/i);
+    await expect(main(page).getByText(/AI mode: (Demo stable|Demo mode|.+ active)/i).first()).toBeVisible();
   });
 
-  test("should show clarification panel for short idea", async ({ page }) => {
-    await page.goto("/");
-    await page.getByLabel(/project idea/i).fill("short idea");
-    // Clarification panel renders — look for its heading or any suggestion text
-    // The panel may or may not appear depending on the length threshold; just ensure no crash
-    await page.waitForTimeout(500);
-    expect(true).toBe(true);
-  });
+  test("generates a demo kit, opens history, and shows AI video repo recommendations", async ({ page }) => {
+    await generateDemoKit(page);
+    const projectUrl = page.url();
 
-  test("should load the sample idea", async ({ page }) => {
-    await page.goto("/");
-    const sampleBtn = page.getByRole("button", { name: /sample/i });
-    if (await sampleBtn.isVisible()) {
-      await sampleBtn.click();
-      const ideaField = page.getByLabel(/project idea/i);
-      await expect(ideaField).not.toBeEmpty();
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 2. Generate project kit (demo mode)
-// ---------------------------------------------------------------------------
-test.describe("Kit Generation", () => {
-  test("should generate a project kit and navigate to detail page", async ({ page }) => {
-    await page.goto("/");
-    await page.getByLabel(/project idea/i).fill(SAMPLE_IDEA);
-    const submitBtn = page.getByRole("button", { name: /generate/i });
-    await submitBtn.click();
-    await page.waitForURL(/\/projects\/.+/, { timeout: 30_000 });
-    await expect(main(page).getByRole("heading", { level: 1 })).toBeVisible();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 3. Project detail — Tabs, exports, section browsing
-// ---------------------------------------------------------------------------
-test.describe("Project Detail", () => {
-  let projectUrl: string;
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    await page.getByLabel(/project idea/i).fill(SAMPLE_IDEA);
-    await page.getByRole("button", { name: /generate/i }).click();
-    await page.waitForURL(/\/projects\/.+/, { timeout: 30_000 });
-    projectUrl = page.url();
-  });
-
-  test("should display readiness score", async ({ page }) => {
-    await page.goto(projectUrl);
-    // Use a specific heading for Build Readiness
-    await expect(
-      main(page).getByRole("heading", { name: /readiness/i })
-    ).toBeVisible();
-  });
-
-  test("should display section tabs and switch between them", async ({ page }) => {
-    await page.goto(projectUrl);
-    // Check for specific tablist
-    const tablist = main(page).getByRole("tablist", { name: /project kit sections/i });
-    await expect(tablist).toBeVisible();
-
-    // Click on a few different tabs
-    const tabButtons = main(page).getByRole("tab");
-    const count = await tabButtons.count();
-    if (count > 2) {
-      await tabButtons.nth(1).click();
-      await tabButtons.nth(2).click();
-      await tabButtons.nth(0).click();
-    }
-  });
-
-  test("should have export buttons", async ({ page }) => {
-    await page.goto(projectUrl);
-    await expect(main(page).getByRole("button", { name: /markdown/i })).toBeVisible();
-    await expect(main(page).getByRole("button", { name: /json/i })).toBeVisible();
-    await expect(main(page).getByRole("button", { name: /zip/i })).toBeVisible();
-  });
-
-  test("should trigger markdown export without crash", async ({ page }) => {
-    await page.goto(projectUrl);
-    const mdBtn = main(page).getByRole("button", { name: /markdown/i });
-    await Promise.all([
-      page.waitForEvent("download", { timeout: 5_000 }).catch(() => null),
-      mdBtn.click(),
-    ]);
-    expect(true).toBe(true);
-  });
-
-  test("should trigger JSON export without crash", async ({ page }) => {
-    await page.goto(projectUrl);
-    const jsonBtn = main(page).getByRole("button", { name: /json/i });
-    await jsonBtn.click();
-    expect(true).toBe(true);
-  });
-
-  test("should trigger ZIP export without crash", async ({ page }) => {
-    await page.goto(projectUrl);
-    const zipBtn = main(page).getByRole("button", { name: /zip/i });
-    await Promise.all([
-      page.waitForEvent("download", { timeout: 5_000 }).catch(() => null),
-      zipBtn.click(),
-    ]);
-    expect(true).toBe(true);
-  });
-
-  test("should have agent pack export buttons", async ({ page }) => {
-    await page.goto(projectUrl);
-    const packBtns = main(page).getByRole("button", { name: /pack/i });
-    await expect(packBtns.first()).toBeVisible();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 4. Project history
-// ---------------------------------------------------------------------------
-test.describe("Project History", () => {
-  test("should show generated project in history", async ({ page }) => {
-    await page.goto("/");
-    await page.getByLabel(/project idea/i).fill(SAMPLE_IDEA);
-    await page.getByRole("button", { name: /generate/i }).click();
-    await page.waitForURL(/\/projects\/.+/, { timeout: 30_000 });
+    await expect(main(page).getByText(/Project kit ready/i)).toBeVisible();
+    await expect(main(page).getByText(/Kit Quality:/i)).toBeVisible();
+    await expect(main(page).getByText(/Repo & Tool Recommendations/i)).toBeVisible();
+    await expect(main(page).getByText(/do not clone automatically/i).first()).toBeVisible();
 
     await page.goto("/projects");
-    // Should see at least one project card/link in main content
-    await expect(main(page).getByRole("link").first()).toBeVisible({ timeout: 5_000 });
+    await expect(main(page).getByText(/AI Video App For Small Shops/i).first()).toBeVisible();
+    await main(page).getByRole("link", { name: /open/i }).first().click();
+    await expect(page).toHaveURL(projectUrl);
   });
 
-  test("should open a project from history", async ({ page }) => {
-    await page.goto("/");
-    await page.getByLabel(/project idea/i).fill(SAMPLE_IDEA);
-    await page.getByRole("button", { name: /generate/i }).click();
-    await page.waitForURL(/\/projects\/.+/, { timeout: 30_000 });
+  test("exports Markdown, JSON, ZIP, and Codex pack with complete safe content", async ({ page }) => {
+    await generateDemoKit(page);
 
-    await page.goto("/projects");
-    // Click first link in main area that goes to a project
-    const link = main(page).getByRole("link").first();
-    if (await link.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await link.click();
-      // Should navigate somewhere (project detail or back to builder)
-      await page.waitForTimeout(2_000);
-      expect(page.url()).toBeTruthy();
+    const markdown = await downloadText(page, /markdown/i);
+    expect(markdown).toContain("# Product Requirements");
+    expect(markdown).toContain("# Task Plan");
+    expect(markdown).toContain("Do not clone");
+
+    const jsonText = await downloadText(page, /json/i);
+    const json = JSON.parse(jsonText);
+    expect(json.sections["task-plan"]).toContain("Acceptance criteria");
+    expect(json.generation.providerName).toBeUndefined();
+    expect(json.generation.model).toBeUndefined();
+    expect(jsonText).not.toContain("apiKey");
+    expect(jsonText).not.toContain("ciphertext");
+
+    const zip = await JSZip.loadAsync(await downloadBuffer(page, /^zip$/i));
+    for (const filename of ["PRODUCT_REQUIREMENTS.md", "TASKS.md", "AI_HANDOFF.md", "SECURITY_CHECKLIST.md", "project.json"]) {
+      expect(zip.file(filename), `${filename} should be present`).toBeTruthy();
     }
-  });
-});
+    expect(await zip.file("TASKS.md")?.async("string")).toContain("Test command");
 
-// ---------------------------------------------------------------------------
-// 5. Repo Map
-// ---------------------------------------------------------------------------
-test.describe("Repo Map", () => {
-  test("should display repo tools", async ({ page }) => {
+    const codexPack = await JSZip.loadAsync(await downloadBuffer(page, /codex pack/i));
+    for (const filename of ["AGENTS.md", "PROJECT_BRIEF.md", "TASKS.md", "REPO_REFERENCES.md", "AI_HANDOFF.md", "NEXT_ACTIONS.md"]) {
+      expect(codexPack.file(filename), `${filename} should be present in Codex pack`).toBeTruthy();
+    }
+    const handoff = await codexPack.file("AI_HANDOFF.md")?.async("string");
+    expect(handoff).toContain("Primary Agent Prompt");
+    expect(handoff).toContain("Do not clone external repositories automatically");
+  });
+
+  test("copies, searches, improves, regenerates, and approves a section", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await generateDemoKit(page);
+    const sectionApiCalls: string[] = [];
+    page.on("request", (request) => {
+      if (/\/api\/(improve-section|regenerate-section)/.test(request.url())) {
+        sectionApiCalls.push(request.url());
+      }
+    });
+
+    await main(page).getByPlaceholder(/search sections/i).fill("task");
+    await main(page).getByRole("tab", { name: /task plan/i }).click();
+    await expect(main(page).getByRole("heading", { name: /task plan/i })).toBeVisible();
+
+    await main(page).getByRole("button", { name: /^copy$/i }).click();
+    await expect(main(page).getByRole("button", { name: /copied/i })).toBeVisible();
+
+    await main(page).getByRole("button", { name: /improve/i }).click();
+    await expect(main(page).locator("article").getByText(/Files:|Acceptance criteria:|Local-First Guardrail/i).first()).toBeVisible({ timeout: 20_000 });
+
+    await main(page).getByRole("button", { name: /regenerate/i }).click();
+    await expect(main(page).locator("article").getByText(/Files:|Acceptance criteria:|Local-First Guardrail|Regenerated Note/i).first()).toBeVisible({ timeout: 20_000 });
+
+    await main(page).getByRole("button", { name: /approve/i }).click();
+    await expect(main(page).getByRole("tab", { name: /task plan.*approved/i })).toBeVisible();
+    expect(sectionApiCalls).toEqual([]);
+  });
+
+  test("saves local provider settings and MCP connection settings", async ({ page }) => {
+    await page.goto("/settings");
+    await expect(main(page).getByRole("heading", { level: 1 })).toContainText(/settings/i);
+    await expect(main(page).getByText(/local fallback/i)).toBeVisible();
+
+    await main(page).getByRole("button", { name: /add provider/i }).click();
+    await main(page).getByLabel(/provider name/i).first().fill("Public Beta Test Provider");
+    await main(page).getByLabel(/api key/i).first().fill("test-key-not-real");
+    await expect(main(page).getByText(/Public Beta Test Provider/i)).toBeVisible();
+
+    const providers = await page.evaluate(() => localStorage.getItem("vibeforge.providers"));
+    expect(providers).toContain("Public Beta Test Provider");
+
+    await main(page).getByRole("button", { name: /add connection/i }).click();
+    const connectionName = main(page).getByLabel(/^name$/i).last();
+    await connectionName.fill("Public beta Codex MCP");
+    await expect(connectionName).toHaveValue("Public beta Codex MCP");
+
+    const connections = await page.evaluate(() => localStorage.getItem("vibeforge.mcpConnections"));
+    expect(connections).toContain("Public beta Codex MCP");
+  });
+
+  test("filters the repo map for AI video tools", async ({ page }) => {
     await page.goto("/repo-map");
     await expect(main(page).getByRole("heading", { level: 1 })).toBeVisible();
-    // Should have tool cards with "When to use" text
+    await main(page).getByPlaceholder(/search/i).fill("video");
+    await expect(main(page).getByText(/\d+ tools? found/i)).toBeVisible();
     await expect(main(page).getByText(/when to use/i).first()).toBeVisible();
   });
 
-  test("should filter tools by search", async ({ page }) => {
-    await page.goto("/repo-map");
-    const searchInput = main(page).getByPlaceholder(/search/i);
-    await searchInput.fill("supabase");
-    // Should show filtered results — check count text
-    await expect(main(page).getByText(/\d+ tools? found/i)).toBeVisible();
-  });
-
-  test("should filter tools by category dropdown", async ({ page }) => {
-    await page.goto("/repo-map");
-    const categorySelect = main(page).locator("select").first();
-    if (await categorySelect.isVisible()) {
-      const options = await categorySelect.locator("option").allTextContents();
-      if (options.length > 1) {
-        await categorySelect.selectOption({ index: 1 });
-      }
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 6. Settings
-// ---------------------------------------------------------------------------
-test.describe("Settings", () => {
-  test("should display settings page", async ({ page }) => {
-    await page.goto("/settings");
-    await expect(main(page).getByRole("heading", { level: 1 })).toBeVisible();
-  });
-
-  test("should add a mock API provider", async ({ page }) => {
-    await page.goto("/settings");
-    const addBtn = main(page).getByRole("button", { name: /add|new|create/i }).first();
-    if (await addBtn.isVisible()) {
-      await addBtn.click();
-      const nameInput = main(page).getByLabel(/name/i).first();
-      if (await nameInput.isVisible({ timeout: 2_000 }).catch(() => false)) {
-        await nameInput.fill("Test Provider");
-      }
-    }
-  });
-
-  test("should display MCP connections section", async ({ page }) => {
-    await page.goto("/settings");
-    // Look for MCP heading or text in main content area
-    await expect(
-      main(page).getByRole("heading", { name: /MCP & External/i })
-    ).toBeVisible();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 7. About page
-// ---------------------------------------------------------------------------
-test.describe("About", () => {
-  test("should display about page without crash", async ({ page }) => {
-    await page.goto("/about");
-    await expect(main(page).getByRole("heading", { level: 1 })).toBeVisible();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 8. Navigation — no crashes
-// ---------------------------------------------------------------------------
-test.describe("Navigation", () => {
-  test("should navigate to all pages without crash", async ({ page }) => {
-    const routes = ["/", "/projects", "/repo-map", "/settings", "/about"];
-    for (const route of routes) {
-      await page.goto(route);
-      await expect(page.locator("body")).toBeVisible();
-      const errorOverlay = page.locator("[data-nextjs-error]");
-      expect(await errorOverlay.count()).toBe(0);
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 9. API health check
-// ---------------------------------------------------------------------------
-test.describe("API Health", () => {
-  test("should respond to health check", async ({ request }) => {
+  test("responds to health checks", async ({ request }) => {
     const response = await request.get("/api/health");
     expect(response.status()).toBe(200);
     const body = await response.json();
     expect(body.status).toBe("ok");
+    expect(body.version).toBeTruthy();
   });
 });

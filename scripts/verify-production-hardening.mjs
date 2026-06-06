@@ -6,11 +6,21 @@ const files = {
   providerVault: read("src/lib/provider-vault.ts"),
   generationLogs: read("src/lib/generation-logs.ts"),
   rateLimit: read("src/lib/rate-limit.ts"),
+  monitoring: read("src/lib/monitoring.ts"),
+  productionReadiness: read("src/lib/production-readiness.ts"),
   generationClient: read("src/lib/generation-client.ts"),
   userFacingErrors: read("src/lib/user-facing-errors.ts"),
   supabaseServer: read("src/lib/supabase-server.ts"),
   serverAuth: read("src/lib/server-auth.ts"),
+  layout: read("src/app/layout.tsx"),
+  healthRoute: read("src/app/api/health/route.ts"),
+  productionReadinessRoute: read("src/app/api/production-readiness/route.ts"),
+  nextConfig: read("next.config.ts"),
+  packageJson: read("package.json"),
+  prodReadinessScript: read("scripts/check-production-readiness.mjs"),
+  vercelEnvScript: read("scripts/check-vercel-env.mjs"),
   migration: read("supabase/migrations/002_production_provider_vault.sql"),
+  rlsMigration: read("supabase/migrations/003_production_rls_data_api_hardening.sql"),
   envExample: read(".env.example"),
   readme: read("README.md"),
 };
@@ -32,6 +42,9 @@ forbidIncludes(files.generationLogs, "api_key", "Generation logs must not log en
 
 requireIncludes(files.generateRoute, "checkRateLimit", "Generate route must apply rate limiting.");
 requireIncludes(files.testProviderRoute, "checkRateLimit", "Test-provider route must apply rate limiting.");
+requireIncludes(files.rateLimit, "VIBEFORGE_REDIS_REST_URL", "Rate limiter must support durable Redis REST env.");
+requireIncludes(files.rateLimit, "UPSTASH_REDIS_REST_URL", "Rate limiter must support Upstash env.");
+requireIncludes(files.rateLimit, "AbortSignal.timeout", "Redis rate limiter must have upstream timeout protection.");
 requireIncludes(files.generateRoute, "writeGenerationLog", "Generate route must write generation logs.");
 requireIncludes(files.testProviderRoute, "writeGenerationLog", "Test-provider route must write generation logs.");
 requireIncludes(files.generateRoute, "resolveProviderForRequest", "Generate route must support providerProfileId resolution.");
@@ -56,13 +69,46 @@ requireIncludes(files.generateRoute, "Retry-After", "Generate route should expos
 requireIncludes(files.testProviderRoute, "Retry-After", "Test-provider route should expose retry guidance.");
 requireIncludes(files.generationClient, "json?.error?.message", "Client must read structured API errors.");
 
+requireIncludes(files.monitoring, "reportError", "Monitoring helper must report structured errors.");
+requireIncludes(files.monitoring, "ERROR_WEBHOOK_URL", "Monitoring helper must support external error webhook.");
+requireIncludes(files.monitoring, "sanitizeLogPayload", "Monitoring helper must sanitize log payloads.");
+
+requireIncludes(files.productionReadiness, "getProductionReadinessReport", "Missing production readiness report helper.");
+requireIncludes(files.productionReadiness, "providerVault", "Readiness report must check provider vault.");
+requireIncludes(files.productionReadiness, "durableRateLimit", "Readiness report must check durable quota/rate-limit.");
+requireIncludes(files.productionReadiness, "monitoring", "Readiness report must check monitoring.");
+requireIncludes(files.productionReadiness, "analytics", "Readiness report must check analytics.");
+requireIncludes(files.productionReadinessRoute, "getProductionReadinessReport", "Missing production readiness API route.");
+requireIncludes(files.healthRoute, "productionReadiness", "Health route must expose production readiness summary.");
+
+requireIncludes(files.layout, "@vercel/analytics/next", "Layout must mount Vercel Analytics.");
+requireIncludes(files.layout, "@vercel/speed-insights/next", "Layout must mount Vercel Speed Insights.");
+requireIncludes(files.packageJson, "@vercel/analytics", "Package must include Vercel Analytics dependency.");
+requireIncludes(files.packageJson, "@vercel/speed-insights", "Package must include Vercel Speed Insights dependency.");
+requireIncludes(files.packageJson, "check:production-readiness", "Package must expose production readiness check script.");
+requireIncludes(files.packageJson, "check:vercel-env", "Package must expose Vercel env check script.");
+requireIncludes(files.prodReadinessScript, "/api/production-readiness", "Production readiness script must call readiness API.");
+requireIncludes(files.vercelEnvScript, "vercel", "Vercel env script must inspect Vercel production env names.");
+
+for (const header of ["X-Content-Type-Options", "Referrer-Policy", "X-Frame-Options", "Permissions-Policy"]) {
+  requireIncludes(files.nextConfig, header, `Missing security header: ${header}`);
+}
+
 requireIncludes(files.migration, "api_key_ciphertext", "Migration must include encrypted key storage.");
 requireIncludes(files.migration, "generation_logs", "Migration must include generation logs table.");
 requireIncludes(files.migration, "generation_logs_select_own", "Generation logs need owner-scoped select policy.");
 requireIncludes(files.migration, "No client INSERT policy", "Generation logs insert policy should stay server-owned.");
+requireIncludes(files.rlsMigration, "CREATE SCHEMA IF NOT EXISTS private", "RLS hardening migration must create private schema.");
+requireIncludes(files.rlsMigration, "private.handle_new_user", "Security definer auth trigger should live in private schema.");
+requireIncludes(files.rlsMigration, "REVOKE ALL ON TABLE", "RLS hardening migration must revoke anon table access.");
+requireIncludes(files.rlsMigration, "GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.projects TO authenticated", "RLS hardening migration must explicitly grant authenticated project access.");
+requireIncludes(files.rlsMigration, "REVOKE INSERT, UPDATE, DELETE ON TABLE public.generation_logs FROM authenticated", "Generation logs must stay server-insert-only.");
+requireIncludes(files.rlsMigration, "anon remains revoked", "Migration must document authenticated-only Data API grants.");
 
 requireIncludes(files.envExample, "SUPABASE_SERVICE_ROLE_KEY=", ".env.example must document server service role key.");
 requireIncludes(files.envExample, "VIBEFORGE_PROVIDER_KEY_SECRET=", ".env.example must document provider key secret.");
+requireIncludes(files.envExample, "VIBEFORGE_REDIS_REST_URL=", ".env.example must document durable Redis rate-limit URL.");
+requireIncludes(files.envExample, "ERROR_WEBHOOK_URL=", ".env.example must document external error monitoring webhook.");
 forbidSecretValues(files.envExample);
 
 for (const section of [

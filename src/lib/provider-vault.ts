@@ -24,7 +24,7 @@ type ProviderProfileRow = {
 };
 
 export type ProviderResolution =
-  | { provider: ProviderSettings | null; source: "inline" | "vault" | "none" }
+  | { provider: ProviderSettings | null; source: "inline" | "vault" | "env" | "none" }
   | { provider: null; source: "vault"; error: string };
 
 export async function resolveProviderForRequest({
@@ -44,7 +44,88 @@ export async function resolveProviderForRequest({
     return { provider: inlineProvider, source: "inline" };
   }
 
+  const envProvider = getEnvironmentProvider();
+  if (envProvider) {
+    return { provider: envProvider, source: "env" };
+  }
+
   return { provider: null, source: "none" };
+}
+
+function getEnvironmentProvider(): ProviderSettings | null {
+  const apiKey =
+    process.env.VIBEFORGE_SERVER_PROVIDER_API_KEY ||
+    process.env.VIBEFORGE_OPENROUTER_API_KEY ||
+    process.env.OPENROUTER_API_KEY ||
+    "";
+  if (!apiKey.trim()) return null;
+  const providerType = providerTypeFromEnv(
+    process.env.VIBEFORGE_SERVER_PROVIDER_TYPE ||
+      (process.env.VIBEFORGE_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY ? "openrouter" : undefined),
+  );
+
+  return {
+    id: "env-provider",
+    providerName:
+      process.env.VIBEFORGE_SERVER_PROVIDER_NAME ||
+      process.env.VIBEFORGE_OPENROUTER_PROVIDER_NAME ||
+      (providerType === "openrouter" ? "OpenRouter" : "Server Provider"),
+    providerType,
+    baseUrl:
+      process.env.VIBEFORGE_SERVER_PROVIDER_BASE_URL ||
+      process.env.VIBEFORGE_OPENROUTER_BASE_URL ||
+      "https://openrouter.ai/api/v1",
+    apiKey,
+    defaultModel:
+      process.env.VIBEFORGE_SERVER_PROVIDER_DEFAULT_MODEL ||
+      process.env.VIBEFORGE_OPENROUTER_DEFAULT_MODEL ||
+      "openai/gpt-4.1-mini",
+    cheapModel:
+      process.env.VIBEFORGE_SERVER_PROVIDER_CHEAP_MODEL ||
+      process.env.VIBEFORGE_OPENROUTER_CHEAP_MODEL ||
+      process.env.VIBEFORGE_SERVER_PROVIDER_DEFAULT_MODEL ||
+      "openai/gpt-4.1-mini",
+    strongModel:
+      process.env.VIBEFORGE_SERVER_PROVIDER_STRONG_MODEL ||
+      process.env.VIBEFORGE_OPENROUTER_STRONG_MODEL ||
+      process.env.VIBEFORGE_SERVER_PROVIDER_DEFAULT_MODEL ||
+      "openai/gpt-4.1",
+    visionModel:
+      process.env.VIBEFORGE_SERVER_PROVIDER_VISION_MODEL ||
+      process.env.VIBEFORGE_OPENROUTER_VISION_MODEL ||
+      process.env.VIBEFORGE_SERVER_PROVIDER_DEFAULT_MODEL ||
+      "google/gemini-2.5-flash",
+    maxBudgetPerGeneration: Number(
+      process.env.VIBEFORGE_SERVER_PROVIDER_MAX_BUDGET ??
+        process.env.VIBEFORGE_OPENROUTER_MAX_BUDGET ??
+        0,
+    ),
+    temperature: Number(
+      process.env.VIBEFORGE_SERVER_PROVIDER_TEMPERATURE ??
+        process.env.VIBEFORGE_OPENROUTER_TEMPERATURE ??
+        0.4,
+    ),
+    tokenLimit: Number(
+      process.env.VIBEFORGE_SERVER_PROVIDER_TOKEN_LIMIT ??
+        process.env.VIBEFORGE_OPENROUTER_TOKEN_LIMIT ??
+        12000,
+    ),
+    enabled: true,
+  };
+}
+
+function providerTypeFromEnv(value?: string): ProviderSettings["providerType"] {
+  if (
+    value === "openai-compatible" ||
+    value === "openrouter" ||
+    value === "gemini" ||
+    value === "anthropic-compatible" ||
+    value === "ollama" ||
+    value === "custom"
+  ) {
+    return value;
+  }
+  return "openai-compatible";
 }
 
 export function encryptProviderApiKey(apiKey: string) {

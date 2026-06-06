@@ -25,8 +25,15 @@ export function downloadBlob(filename: string, blob: Blob) {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
+  // Safari/iOS requires the anchor to be in the DOM for .download to work
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
   anchor.click();
-  URL.revokeObjectURL(url);
+  // Delay cleanup so the browser can finish the download before revoking
+  window.setTimeout(() => {
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }, 150);
 }
 
 export function copyText(text: string) {

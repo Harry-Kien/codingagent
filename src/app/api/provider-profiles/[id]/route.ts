@@ -16,7 +16,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export async function PATCH(request: Request, props: RouteParams) {
   const { id } = await props.params;
   const ip = getClientIp(request);
-  const rl = checkRateLimit(ip, { maxRequests: 20, windowMs: 60_000 });
+  const rl = await checkRateLimit(ip, { maxRequests: 20, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(
       { error: userFacingError("rate_limited") },
@@ -101,6 +101,15 @@ export async function PATCH(request: Request, props: RouteParams) {
 
 export async function DELETE(request: Request, props: RouteParams) {
   const { id } = await props.params;
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit(ip, { maxRequests: 20, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: userFacingError("rate_limited") },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
+
   const client = getSupabaseAdminClient();
   if (!client) {
     return NextResponse.json({ error: userFacingError("supabase_not_configured") }, { status: 503 });

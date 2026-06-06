@@ -15,6 +15,7 @@
 /test-results
 /playwright-report
 /blob-report
+/output
 
 # next.js
 /.next/
@@ -42,6 +43,11 @@ dev-review.*.log
 
 # vercel
 .vercel
+.vercel-cli-appdata
+.vercel-cli-cache
+
+# local package/cache folders
+.npm-cache
 
 # typescript
 *.tsbuildinfo

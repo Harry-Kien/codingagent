@@ -17,7 +17,7 @@ export function SyncStatusBadge() {
     return (
       <Badge variant="neutral" className="gap-1 text-[11px]">
         <HardDrive className="h-3 w-3" />
-        Local
+        Browser
       </Badge>
     );
   }

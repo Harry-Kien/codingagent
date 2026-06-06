@@ -34,6 +34,15 @@ const SAFE_COLUMNS = [
 ].join(",");
 
 export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit(ip, { maxRequests: 30, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: userFacingError("rate_limited") },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
+  }
+
   const client = getSupabaseAdminClient();
   if (!client) {
     return NextResponse.json({ error: userFacingError("supabase_not_configured") }, { status: 503 });
@@ -80,7 +89,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
-  const rl = checkRateLimit(ip, { maxRequests: 20, windowMs: 60_000 });
+  const rl = await checkRateLimit(ip, { maxRequests: 20, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(
       { error: userFacingError("rate_limited") },

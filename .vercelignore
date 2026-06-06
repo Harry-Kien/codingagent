@@ -1,0 +1,12 @@
+.env*
+.vercel
+.next
+node_modules
+.npm-cache
+.vercel-cli-appdata
+.vercel-cli-cache
+playwright-report
+test-results
+output
+*.log
+*.tsbuildinfo

@@ -12,7 +12,7 @@ export type GenerationLogInput = {
   model?: string | null;
   mode?: GenerationMode | null;
   status: "success" | "fallback" | "error" | "rate_limited";
-  source: "demo" | "inline" | "vault" | "none";
+  source: "demo" | "inline" | "vault" | "env" | "none";
   error?: string | null;
   startedAt: string;
   finishedAt?: string;

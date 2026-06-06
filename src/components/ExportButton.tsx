@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Archive, Download, FileJson, FileText, Package } from "lucide-react";
+import { track } from "@vercel/analytics";
+import { AlertCircle, Archive, ClipboardCheck, Download, FileJson, FileText, Package } from "lucide-react";
 import type { ProjectKit } from "@/types/vibeforge";
 import { Button } from "@/components/ui/button";
-import { downloadAgentPack, downloadMarkdown, downloadProjectJson, downloadZip } from "@/lib/export";
+import { downloadAgentPack, downloadMarkdown, downloadProjectJson, downloadQualityReport, downloadZip } from "@/lib/export";
 import type { AgentExportPackId } from "@/lib/kit-sections";
 
 export function ExportButton({
@@ -15,14 +16,16 @@ export function ExportButton({
   label,
 }: {
   project: ProjectKit;
-  mode?: "zip" | "markdown" | "json" | "section" | "agent-pack";
+  mode?: "zip" | "markdown" | "json" | "section" | "agent-pack" | "quality-report";
   sectionKey?: string;
   packId?: AgentExportPackId;
   label?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "working" | "failed">("idle");
   const icon =
-    mode === "json" ? (
+    mode === "quality-report" ? (
+      <ClipboardCheck className="h-4 w-4" />
+    ) : mode === "json" ? (
       <FileJson className="h-4 w-4" />
     ) : mode === "zip" ? (
       <Archive className="h-4 w-4" />
@@ -36,7 +39,9 @@ export function ExportButton({
       <FileText className="h-4 w-4" />
     );
   const fallbackLabel =
-    mode === "json"
+    mode === "quality-report"
+      ? "Quality Report"
+      : mode === "json"
       ? "JSON"
       : mode === "zip"
         ? "ZIP"
@@ -52,13 +57,21 @@ export function ExportButton({
       if (mode === "zip") await downloadZip(project);
       if (mode === "json") downloadProjectJson(project);
       if (mode === "markdown") downloadMarkdown(project);
+      if (mode === "quality-report") downloadQualityReport(project);
       if (mode === "section") downloadMarkdown(project, sectionKey);
       if (mode === "agent-pack") {
         if (!packId) throw new Error("Missing export pack.");
         await downloadAgentPack(project, packId);
       }
+      track("kit_export_completed", {
+        mode,
+        packId: packId ?? "",
+        appType: project.input.appType,
+        section: sectionKey ?? "",
+      });
       setStatus("idle");
     } catch {
+      track("kit_export_failed", { mode, packId: packId ?? "", section: sectionKey ?? "" });
       setStatus("failed");
     }
   }

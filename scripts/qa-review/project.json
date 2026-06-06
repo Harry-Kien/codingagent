@@ -1,0 +1,575 @@
+{
+  "id": "kit_701020ac-a0d5-4463-8a1f-daedf7d8849b",
+  "name": "AI Video App For Small Shops That Generates Product Showcase",
+  "input": {
+    "idea": "AI video app for small shops that generates product showcase videos from product photos and descriptions",
+    "targetUsers": "Small shop owners, local retailers, Shopee/TikTok Shop sellers",
+    "problem": "Small shops can't afford professional video production for their products",
+    "desiredOutput": "30-second product showcase videos with text overlays, background music, and transitions",
+    "appType": "AI video app",
+    "timeline": "7 day build",
+    "skillLevel": "Builder",
+    "budgetSensitivity": "high",
+    "preferredStack": [
+      "Next.js",
+      "Supabase"
+    ],
+    "apiProviders": [
+      "OpenRouter"
+    ],
+    "wantsMcp": true,
+    "wantsAutomation": true
+  },
+  "sections": {
+    "product-strategy": "## Outcome\nAI Video App For Small Shops That Generates Product Showcase helps Small shop owners, local retailers, Shopee/TikTok Shop sellers solve: Small shops can't afford professional video production for their products.\n\nThe first version should produce: 30-second product showcase videos with text overlays, background music, and transitions.\n\n## Primary Persona\n- User: Small shop owners, local retailers, Shopee/TikTok Shop sellers\n- Skill level: Builder\n- Budget sensitivity: high\n- Main job: Small shops can't afford professional video production for their products. The product gives them a fast, guided path to 30-second product showcase videos with text overlays, background music, and transitions without needing technical skills.\n\n## Job To Be Done\nWhen Small shop owners, local retailers, Shopee/TikTok Shop sellers face Small shops can't afford professional video production for their products, they can use AI Video App For Small Shops That Generates Product Showcase to quickly get 30-second product showcase videos with text overlays, background music, and transitions through a simple, guided workflow.\n\n## Product Promise\nAI Video App For Small Shops That Generates Product Showcase should produce 30-second product showcase videos with text overlays, background music, and transitions that is ready to use immediately. The interface should be simple enough for Small shop owners, local retailers, Shopee/TikTok Shop sellers to operate without training. The first version must prove value with a single, complete workflow before adding advanced features.\n\n## Success Metrics\n- User completes the primary workflow in under 5 minutes.\n- User downloads or shares their 30-second product showcase videos with text overlays, background music, and transitions successfully.\n- 60% of users return within 48 hours to create another output.\n- Zero paid API calls required for the demo/preview flow.",
+    "mvp-scope": "## Build First\n- Idea intake for product, audience, tone, and publishing goal\n- 7-day content calendar with scripts, captions, shot lists, and generation prompts\n- Project history, section regeneration, and export packs for coding agents\n- Simple intake form for Small shop owners, local retailers, Shopee/TikTok Shop sellers to provide their input (AI video app-specific fields).\n- Core processing pipeline that transforms user input into 30-second product showcase videos with text overlays, background music, and transitions.\n- Preview and download flow so users can verify output before sharing.\n- Local-first storage so the app works without accounts or API keys.\n\n## Acceptance Criteria\n- Small shop owners, local retailers, Shopee/TikTok Shop sellers can complete the primary workflow without technical knowledge.\n- The output (30-second product showcase videos with text overlays, background music, and transitions) is ready to use or share immediately.\n- Demo mode works without API keys or external services.\n- The app handles errors gracefully and shows clear status messages.\n\n## Do Not Build Yet\n- User accounts and cloud storage before the core workflow is validated.\n- Payment processing before demand is proven.\n- Advanced customization options before the default output is good enough.\n- Full video rendering pipeline before validating prompt and script demand\n- Unbounded media storage, background rendering queues, and paid video APIs in the first pass\n- Heavy video rendering pipeline before validating scripts, captions, and planning outputs.\n",
+    "feature-roadmap": "## Phase 0: Demo-Ready Kit Generator\n- Builder intake at /.\n- Deterministic demo generation.\n- Project detail tabs and exports.\n- Repo reference URLs and coding-agent prompts.\n\n## Phase 1: Vibe Coding Engine\n- Upgrade every generated section into an implementation contract.\n- Add TASKS.md with phases, file paths, acceptance criteria, and test commands.\n- Add REPO_REFERENCES behavior through the Repo & Tool Map section.\n- Add Start Build prompt for Codex/Cline/Cursor.\n\n## Phase 2: Provider Quality\n- Use provider-backed deep planning mode for richer output.\n- Regenerate individual sections with the same quality contract.\n- Add structured provider errors and fallback behavior.\n\n## Phase 3: Production Layer\n- Supabase auth and cloud sync.\n- Server-side provider vault.\n- Generation logs, usage tracking, and shared rate limits.\n\n## Phase 4: Beta Launch\n- Onboarding, sample projects, launch checklist, docs, and public demo.",
+    "stack-recommendation": "## Architecture Overview\nAI Video App For Small Shops That Generates Product Showcase is built as a local-first Next.js web app that helps Small shop owners, local retailers, Shopee/TikTok Shop sellers create 30-second product showcase videos with text overlays, background music, and transitions. The architecture keeps the first workflow simple, fast, and easy for AI coding agents to extend.\n\n## Frontend\n- App Router pages under src/app/.\n- Landing/intake page at src/app/page.tsx for AI video app input.\n- Output preview at src/app/preview/page.tsx showing generated 30-second product showcase videos with text overlays, background music, and transitions.\n- History at src/app/history/page.tsx for past outputs.\n- AI video app-specific components in src/components/ai-video-app/.\n\n## Backend And API Layer\n- Route handlers in src/app/api/ for AI video app-specific processing.\n- POST /api/process — Main processing endpoint for user input.\n- POST /api/generate — AI-powered generation endpoint (when provider is configured).\n- GET /api/outputs/[id] — Retrieve a specific output.\n- Zod validation on every route before processing.\n- Rate limiting before expensive AI or external API calls.\n\n## Storage\n- Default: browser localStorage for the MVP (no accounts needed).\n- File uploads: local /tmp during dev, cloud storage (Cloudinary/S3) for production.\n- Supabase for optional user accounts and cloud sync later.\n\n## AI Provider Layer\n- Demo mode with deterministic output (no API keys needed).\n- Provider mode with OpenRouter/Gemini/OpenAI for richer generation.\n- Provider failure falls back safely to demo output.\n\n## Deployment\n- Vercel (recommended) for the Next.js app.\n- Environment variables optional for demo; required for AI provider and storage.\n\n## Risks\n- Video rendering is compute-heavy; defer to Phase 2 after validating planning outputs.\n- External API costs should be controlled with rate limits and usage caps.\n- User uploads need size limits and type validation before processing.\n\n## Recommended Stack\n- Next.js\n- Supabase later\n- shadcn/ui\n- Gemini or OpenRouter provider option\n- Next.js App Router + TypeScript\n- Tailwind CSS + shadcn/ui\n- Zod + React Hook Form\n- localStorage (default) → Supabase (optional)\n\n## Why This Stack Fits\nThis stack allows Small shop owners, local retailers, Shopee/TikTok Shop sellers to start using the app immediately without setup. The Next.js App Router handles both the UI and API routes in one project. Local-first storage means no accounts are needed for the MVP.\n\n## Alternatives Considered\n- Vite: faster for static sites, but lacks built-in API routes needed for AI video app processing.\n- Full backend first: unnecessary until the core workflow proves demand.\n- No-code platform: fast to prototype but limits customization for 30-second product showcase videos with text overlays, background music, and transitions.",
+    "repo-tool-map": "## Reference Policy\nRepo references are URLs and implementation inspiration only. Do not clone repositories automatically. Do not copy source code without license review and explicit user approval.\n\n## Recommended References\n- **Next.js** (use now): https://github.com/vercel/next.js\n  - Why useful: Full-stack React app with App Router and Vercel deployment — fits the AI video app build path.\n  - How AI should use it: Use Next.js App Router with typed data models and build-safe environment access.\n  - Use as: install. Vercel free tier can run many MVPs; serverless usage can grow with traffic.\n- **shadcn/ui** (use now): https://github.com/shadcn-ui/ui\n  - Why useful: Accessible UI components for React apps — fits the AI video app build path.\n  - How AI should use it: Build the UI with shadcn-style components, lucide icons, and compact responsive layouts.\n  - Use as: install. No runtime service cost.\n- **Codex CLI** (use now): https://github.com/openai/codex\n  - Why useful: Helps turn the generated kit into controlled implementation work.\n  - How AI should use it: Read AGENTS.md, PROJECT_BRIEF.md, and TASKS.md, then implement the next task with tests.\n  - Use as: external-tool. Costs depend on the configured model/provider, not the CLI repository.\n- **Cline** (use now): https://github.com/cline/cline\n  - Why useful: Helps turn the generated kit into controlled implementation work.\n  - How AI should use it: Use the generated TASKS.md and implement one milestone at a time with concise diffs.\n  - Use as: external-tool. Model spend is controlled by the user's configured provider.\n- **Cursor** (use now): https://www.cursor.com/\n  - Why useful: Helps turn the generated kit into controlled implementation work.\n  - How AI should use it: Read .cursorrules, PROJECT_BRIEF.md, and TASKS.md, then implement the next small task.\n  - Use as: external-tool. Subscription or model costs are external to the generated app.\n- **Claude Code** (use now): https://www.anthropic.com/claude-code\n  - Why useful: Helps turn the generated kit into controlled implementation work.\n  - How AI should use it: Read CLAUDE.md, PROJECT_BRIEF.md, and TASKS.md. Preserve local-first behavior and verify changes.\n  - Use as: external-tool. Costs depend on the user's Claude plan or configured account.\n- **Zod** (use now): https://github.com/colinhacks/zod\n  - Why useful: TypeScript-first schema validation — fits the AI video app build path.\n  - How AI should use it: Use Zod for all API input validation and form schema definitions.\n  - Use as: install. Free.\n- **React Hook Form** (use now): https://github.com/react-hook-form/react-hook-form\n  - Why useful: Performant form management with validation — fits the AI video app build path.\n  - How AI should use it: Use React Hook Form with Zod resolver for type-safe form validation.\n  - Use as: install. Free.\n- **Sharp** (use now): https://github.com/lovell/sharp\n  - Why useful: High-performance image processing for Node.js — fits the AI video app build path.\n  - How AI should use it: Use Sharp for server-side image optimization and thumbnail generation.\n  - Use as: install. Free.\n- **Cloudinary** (use now): https://cloudinary.com/\n  - Why useful: Cloud-based image and video management — fits the AI video app build path.\n  - How AI should use it: Use Cloudinary for image CDN with on-the-fly transformations.\n  - Use as: external-tool. Free tier; paid for bandwidth.\n- **Trigger.dev** (use now): https://github.com/triggerdotdev/trigger.dev\n  - Why useful: Background jobs and scheduled tasks for serverless — fits the AI video app build path.\n  - How AI should use it: Use Trigger.dev for background job processing and scheduled tasks.\n  - Use as: install. Free tier available.\n- **Inngest** (use now): https://github.com/inngest/inngest\n  - Why useful: Event-driven serverless functions and workflows — fits the AI video app build path.\n  - How AI should use it: Use Inngest for event-driven background workflows with retry and scheduling.\n  - Use as: install. Free tier; paid for production.\n- **Medusa** (use now): https://github.com/medusajs/medusa\n  - Why useful: Open-source headless commerce engine — fits the AI video app build path.\n  - How AI should use it: Use Medusa for headless commerce with Next.js storefront.\n  - Use as: install. Free; hosting and infrastructure costs apply.\n- **Stripe** (use now): https://github.com/stripe/stripe-node\n  - Why useful: Payment processing, subscriptions, and billing — fits the AI video app build path.\n  - How AI should use it: Add Stripe Checkout for subscription billing with webhook-based status sync.\n  - Use as: install. 2.9% + 30¢ per transaction.\n- **Meilisearch** (use now): https://github.com/meilisearch/meilisearch\n  - Why useful: Fast full-text search engine — fits the AI video app build path.\n  - How AI should use it: Add Meilisearch for instant product search with faceted filters.\n  - Use as: install. Free self-hosted; cloud has paid tiers.\n- **Vercel AI SDK** (use now): https://github.com/vercel/ai\n  - Why useful: Streaming AI responses in Next.js apps — fits the AI video app build path.\n  - How AI should use it: Use Vercel AI SDK for streaming chat completions with provider-agnostic hooks.\n  - Use as: install. SDK is free; model API calls cost per token.\n- **LangChain.js** (use now): https://github.com/langchain-ai/langchainjs\n  - Why useful: LLM chains, RAG pipelines, and tool-calling agents — fits the AI video app build path.\n  - How AI should use it: Use LangChain for RAG pipeline with document loading, splitting, embedding, and retrieval.\n  - Use as: install. Free SDK; model and vector DB costs vary.\n- **OpenAI Node SDK** (use now): https://github.com/openai/openai-node\n  - Why useful: Direct OpenAI and OpenAI-compatible API access — fits the AI video app build path.\n  - How AI should use it: Use OpenAI SDK for server-side completions with structured output and function calling.\n  - Use as: install. Pay-per-token based on model.\n- **Google GenAI SDK** (use now): https://github.com/google-gemini/generative-ai-js\n  - Why useful: Access Gemini models from JavaScript/TypeScript — fits the AI video app build path.\n  - How AI should use it: Use Google GenAI SDK for Gemini completions with multimodal input support.\n  - Use as: install. Gemini Flash is very cheap; Pro costs more.\n- **Superpowers** (use now): https://github.com/obra/superpowers\n  - Why useful: Helps turn the generated kit into controlled implementation work.\n  - How AI should use it: Adopt a skill-based workflow and keep each implementation step small, verified, and documented.\n  - Use as: external-tool. No direct app runtime cost.\n\n## GitHub Discovery URLs\nUse these if the built-in repo map does not match the user's exact niche:\n- https://github.com/search?q=AI%20video%20app%20AI%20video%20app%20for%20small%20shops%20that%20generates%20product%20showcase%20videos%20from%20product%20photos%20and%20descriptions%20Next.js%20Supabase%20github&type=repositories&s=stars&o=desc\n- https://github.com/search?q=AI%20video%20app%20Next.js%20SaaS%20starter&type=repositories&s=stars&o=desc\n- https://github.com/search?q=AI%20video%20app%20AI%20app%20template&type=repositories&s=stars&o=desc\n\n## Agent Discovery Prompt\nFind 5 reference repositories for this product idea. Use them only for architecture inspiration, package choices, and implementation patterns. Do not clone or copy code unless the user explicitly approves license review and code reuse.\n\n## How The Coding Agent Should Use Repo URLs\n- Read README/docs for patterns.\n- Extract architecture ideas, not source code.\n- Prefer official package installation over copying files.\n- Keep the generated product's scope smaller than the reference repo.",
+    "cost-aware-ai-plan": "## Cheap Model Tasks\n- Draft strategy\n- First-pass tasks\n- Repo summaries\n- Clarification questions\n\n## Strong Model Tasks\n- Final architecture\n- Security review\n- Production deployment plan\n- Complex tradeoff decisions\n\n## Cost Controls\n- Cache generated kits locally\n- Regenerate one section at a time\n- Keep reference repo summaries short\n- Avoid video rendering or vision models until needed\n- Use cheap defaults and strict token limits",
+    "database-schema": "## Local MVP Collections\n```ts\nprojects: ProjectKit[]\nproviders: ProviderSettings[]\nmcpConnections: McpConnection[]\n```\n\n## ProjectKit Shape\n```ts\ntype ProjectKit = {\n  id: string;\n  name: string;\n  input: ProjectInput;\n  sections: Record<string, string>;\n  favorites: Record<string, boolean>;\n  repoRecommendations: RepoRecommendation[];\n  readinessScore: ReadinessScore;\n  generation?: GenerationMetadata;\n  createdAt: string;\n  updatedAt: string;\n}\n```\n\n## Supabase Production Tables\n| Table | Purpose | Key Columns |\n|---|---|---|\n| projects | Stores generated kits | id, user_id, name, input_json, sections_json, readiness_json, generation_json, created_at, updated_at |\n| project_versions | Stores meaningful section snapshots | id, project_id, user_id, sections_json, label, created_at |\n| provider_profiles | Stores provider metadata and encrypted keys | id, user_id, provider_name, provider_type, base_url, encrypted key fields |\n| generation_logs | Tracks provider usage and failures | id, user_id, project_id, route, provider_name, model, generation_mode, status, error_message |\n| mcp_connections | Stores external workflow configuration | id, user_id, name, type, command_or_url, env_vars, status |\n\n## Acceptance Criteria\n- Local mode works with no database.\n- Cloud mode is owner-scoped with RLS.\n- API keys are never stored in plaintext.\n- Old local projects can still open after schema additions.",
+    "api-specification": "## API Contract Principles\nAll API routes must validate input with Zod, return structured user-facing errors, apply rate limits before expensive calls, and never log secrets.\n\n## POST /api/process\nPurpose: Process user input and generate 30-second product showcase videos with text overlays, background music, and transitions.\n\nRequest body:\n```json\n{\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"targetAudience\": \"string\",\n  \"style\": \"string\",\n  \"options\": {}\n}\n```\n\nResponse body:\n```json\n{\n  \"id\": \"output_xxx\",\n  \"status\": \"processing | complete | failed\",\n  \"result\": {},\n  \"previewUrl\": \"string\",\n  \"downloadUrl\": \"string\"\n}\n```\n\nError cases:\n- 400 invalid_request — missing required fields\n- 413 file_too_large — upload exceeds size limit\n- 429 rate_limited — too many requests\n- 500 processing_failed — generation error\n\nFiles to implement:\n- src/app/api/process/route.ts\n- src/lib/processor.ts\n- src/lib/validation.ts\n\n## POST /api/generate\nPurpose: AI-powered enhanced generation (uses configured provider).\n\nRequest body:\n```json\n{\n  \"inputId\": \"string\",\n  \"mode\": \"fast | balanced | deep\",\n  \"providerProfileId\": \"optional\"\n}\n```\n\nResponse body:\n```json\n{\n  \"id\": \"gen_xxx\",\n  \"result\": {},\n  \"source\": \"demo | provider\",\n  \"model\": \"optional model id\"\n}\n```\n\nAcceptance criteria:\n- Demo mode works without any API keys.\n- Provider mode falls back safely to demo output.\n- API keys are never returned in responses.\n- Invalid input returns a clear error message.\n\nTest command:\n```powershell\nnpm.cmd run lint\nnpm.cmd run build\n```\n\n## GET /api/outputs/[id]\nPurpose: Retrieve a specific generated output.\n\nResponse body:\n```json\n{\n  \"id\": \"output_xxx\",\n  \"title\": \"string\",\n  \"result\": {},\n  \"previewUrl\": \"string\",\n  \"downloadUrl\": \"string\",\n  \"createdAt\": \"string\"\n}\n```\n\nAcceptance criteria:\n- Returns 404 for missing outputs.\n- Includes preview and download URLs.\n- Response is fast enough for polling.",
+    "ui-screens": "## Screen: / — Landing / Intake\nPrimary job: welcome Small shop owners, local retailers, Shopee/TikTok Shop sellers and capture their input for AI video app.\nKey controls: input form with fields specific to AI video app, demo/sample button, submit button.\n\nAcceptance criteria:\n- Small shop owners, local retailers, Shopee/TikTok Shop sellers can start in under 30 seconds.\n- Demo mode works without any setup.\n- Loading state shows progress clearly.\n- Error messages explain what went wrong and what to do next.\n\n## Screen: /preview/[id] — Output Preview\nPrimary job: show the generated 30-second product showcase videos with text overlays, background music, and transitions with options to download, share, or regenerate.\nKey panels: output preview area, download button, share button, edit/regenerate controls.\n\nAcceptance criteria:\n- Output is displayed immediately when ready.\n- Download works in all major browsers.\n- User can request regeneration with different options.\n\n## Screen: /history — Past Outputs\nPrimary job: show all previously generated outputs with search and filters.\n\n## Screen: /settings — Configuration\nPrimary job: configure AI provider (optional), account settings, and preferences.\n\n## Responsive Rules\n- Mobile-first layout for Small shop owners, local retailers, Shopee/TikTok Shop sellers who may use phones.\n- Key actions (submit, download, share) are always visible.\n- Form inputs stack cleanly on small screens.",
+    "user-flows": "## Happy Path: First Kit In Demo Mode\n1. User opens /.\n2. User enters: AI video app for small shops that generates product showcase videos from product photos and descriptions.\n3. User chooses 7 day build and Builder.\n4. User clicks Generate.\n5. System creates a kit without API keys.\n6. User opens Start Build and copies the first coding-agent prompt.\n7. User exports Codex Pack or ZIP.\n\nSuccess criteria: user can hand the exported files to a coding agent without writing a new brief.\n\n## Happy Path: Provider-Backed Deep Planning\n1. User configures a provider in Settings.\n2. User chooses Deep planning.\n3. System generates richer architecture, tasks, repo references, and prompts.\n4. If provider fails, system returns demo fallback with explanation.\n\n## Failure Path: Provider Or Repo Reference Fallback\n1. Provider key is invalid, quota is exhausted, provider times out, or the model is wrong.\n2. System shows a clear user-facing error and preserves the user's form input.\n3. System can still create a demo kit and include fallback GitHub search URLs.\n4. Coding agent uses repo URLs as inspiration only and does not clone automatically.\n\n## Template-Specific Flow\n1. Produce or review content plan.\n2. Produce or review video scripts.\n3. Produce or review shot lists.\n4. Produce or review ai video prompts.\n5. Produce or review caption variants.",
+    "coding-agent-rules": "# Agent Rules\n\n## Mission\nImplement the project from the generated kit files. Treat Markdown files as implementation contracts.\n\n## Hard Rules\n- Preserve local-first behavior unless the task explicitly moves a feature to server/cloud.\n- Do not require API keys for demo/core flow.\n- Do not clone external repositories automatically.\n- Do not copy code from reference repos without license review and user approval.\n- Do not hardcode secrets.\n- Keep changes focused and verify after each milestone.\n\n## Working Method\n1. Read PROJECT_BRIEF.md, TASKS.md, TOOLS.md, API_SPEC.md, and SECURITY_CHECKLIST.md.\n2. Pick only the next task from TASKS.md.\n3. Inspect existing files before editing.\n4. Implement the smallest working slice.\n5. Run the listed test command.\n6. Report changed files and remaining risks.\n\n## Definition Of Done\n- Acceptance criteria are satisfied.\n- Build/lint/check commands pass or failures are explained.\n- Exports still work.\n- No unrelated rewrites.",
+    "ai-handoff": "## Purpose\nThis file is the safest single-file brief to upload into Codex, Cline, Cursor, Claude Code, or another AI coding agent. It tells the agent exactly what to build, which files to read first, what constraints to preserve, and how to verify the work.\n\n## Project Snapshot\n- Project: AI Video App For Small Shops That Generates Product Showcase\n- App type: AI video app\n- Target users: Small shop owners, local retailers, Shopee/TikTok Shop sellers\n- Problem: Small shops can't afford professional video production for their products\n- Desired output: 30-second product showcase videos with text overlays, background music, and transitions\n- Timeline: 7 day build\n- Skill level: Builder\n- Budget sensitivity: high\n- Preferred stack: Next.js, Supabase\n- Providers available: OpenRouter\n- MCP requested: yes\n- Automation requested: yes\n\n## Upload These Files Together\n1. AI_HANDOFF.md\n2. PRODUCT_REQUIREMENTS.md\n3. MVP_SCOPE.md\n4. ARCHITECTURE.md\n5. API_SPEC.md\n6. TASKS.md\n7. IMPLEMENTATION_PHASES.md\n8. REPO_REFERENCES.md\n9. SECURITY_CHECKLIST.md\n10. TEST_PLAN.md\n11. VIBE_CODING_PROMPTS.md\n\n## Primary Agent Prompt\n```text\nYou are the implementation agent for this project kit. Read AI_HANDOFF.md, PRODUCT_REQUIREMENTS.md, MVP_SCOPE.md, ARCHITECTURE.md, API_SPEC.md, TASKS.md, IMPLEMENTATION_PHASES.md, REPO_REFERENCES.md, SECURITY_CHECKLIST.md, and TEST_PLAN.md before editing. Implement only the next highest-priority task from TASKS.md. Preserve the requested user outcome: 30-second product showcase videos with text overlays, background music, and transitions. Keep local/demo fallback working. Do not hardcode secrets. Do not clone external repositories automatically. Treat repo URLs as reference-only. Before editing, inspect the target files named by the task. After editing, run the listed test command and report changed files, checks run, and remaining risks.\n```\n\n## Non-Negotiable Constraints\n- Match the user's stated target users, problem, desired output, timeline, stack, provider, MCP, and automation choices.\n- Build the smallest working workflow before adding production-only systems.\n- Keep API keys and secrets out of source code and prompts.\n- Do not execute user-supplied code.\n- Do not clone external repositories automatically.\n- Use repo URLs only for README/docs/architecture/package inspiration unless the user approves license review and code reuse.\n\n## Quality Gate Before Coding\nThe agent should not start implementation until it can answer:\n- What exact output should the user receive?\n- Which user problem does the MVP solve first?\n- Which files are likely to change in the next task?\n- What acceptance criteria prove the task is done?\n- What command verifies the task?\n- Which features are explicitly not part of the first build?\n\n## Definition Of Done\n- The implemented task satisfies its acceptance criteria.\n- Lint/build/check commands pass, or any blocker is reported with the root cause.\n- Demo/local-first behavior still works.\n- Exported Markdown/JSON/ZIP/agent packs still work.\n- No secrets, external repo code, or unrelated rewrites are introduced.",
+    "task-plan": "## Phase 1: Working AI video app MVP\n\n### Task 1: Build the AI video app intake form\nFiles:\n- src/app/page.tsx\n- src/components/ai-video-app/IntakeForm.tsx\n- src/types/ai-video-app.ts\n\nImplementation notes:\n- Create a form for Small shop owners, local retailers, Shopee/TikTok Shop sellers to provide their input (title, description, target audience, style preferences).\n- Keep defaults useful so users can submit with minimal input.\n- Show a demo/sample button to pre-fill the form.\n\nAcceptance criteria:\n- Small shop owners, local retailers, Shopee/TikTok Shop sellers can submit the form with minimal required fields.\n- Validation explains what is missing in clear language.\n- Form works on mobile devices.\n\nTest command:\n```powershell\nnpm.cmd run lint\nnpm.cmd run build\n```\n\n### Task 2: Build the core processing pipeline\nFiles:\n- src/app/api/process/route.ts\n- src/lib/processor.ts\n- src/lib/validation.ts\n\nImplementation notes:\n- Accept user input from the intake form.\n- Process it into 30-second product showcase videos with text overlays, background music, and transitions using a deterministic demo pipeline first.\n- Return a preview-ready result.\n\nAcceptance criteria:\n- API endpoint accepts valid input and returns structured output.\n- Demo mode produces useful 30-second product showcase videos with text overlays, background music, and transitions without any API keys.\n- Invalid input returns clear error messages.\n- Processing completes in under 10 seconds for demo mode.\n\nTest command:\n```powershell\nnpm.cmd run lint\nnpm.cmd run build\n```\n\n### Task 3: Build the output preview and download page\nFiles:\n- src/app/preview/[id]/page.tsx\n- src/components/ai-video-app/OutputPreview.tsx\n- src/components/ai-video-app/DownloadButton.tsx\n\nAcceptance criteria:\n- User can see their generated 30-second product showcase videos with text overlays, background music, and transitions immediately.\n- Download button works in all major browsers.\n- User can regenerate with different options.\n- Empty and error states are handled gracefully.\n\nTest command:\n```powershell\nnpm.cmd run lint\nnpm.cmd run build\n```\n\n### Task 4: Build history and local storage\nFiles:\n- src/app/history/page.tsx\n- src/lib/storage.ts\n- src/components/ai-video-app/HistoryList.tsx\n\nAcceptance criteria:\n- Past outputs are saved to localStorage.\n- User can browse, search, and reopen past outputs.\n- Old outputs still load after app updates.\n\n## Phase 2: AI-Enhanced Generation\n- Add AI provider integration for richer 30-second product showcase videos with text overlays, background music, and transitions.\n- Add Fast/Balanced/Deep generation modes.\n- Add structured errors and demo fallback when provider fails.\n\n## Phase 3: Production Features\n- Add user accounts and cloud storage.\n- Add sharing and collaboration.\n- Add usage analytics and rate limiting.\n\n## Do Not Build Yet\n- Payment processing before demand is proven.\n- Team workspaces before single-user flow is solid.\n- Automatic repo cloning or external code execution.\n- Heavy video rendering pipelines before the core workflow proves useful.",
+    "implementation-phases": "## Phase 0: Validate The Brief\nGoal: make sure the generated kit matches the user's actual request before code starts.\n\nFiles to review:\n- PRODUCT_REQUIREMENTS.md\n- MVP_SCOPE.md\n- REPO_REFERENCES.md\n- TASKS.md\n\nAcceptance criteria:\n- The target users, problem, desired output, and app type match the builder input.\n- The MVP avoids expensive or risky features that do not fit 7 day build.\n- Repo references are URL-only and include do-not-clone guidance.\n\nTest command:\n```powershell\nnpm.cmd run check:product\n```\n\n## Phase 1: Build The Smallest Working Flow\nGoal: implement one end-to-end flow that creates 30-second product showcase videos with text overlays, background music, and transitions for Small shop owners, local retailers, Shopee/TikTok Shop sellers.\n\nLikely files:\n- src/app/page.tsx\n- src/components/builder/BuilderForm.tsx\n- src/lib/generator-shared.ts\n- src/lib/export.ts\n\nAcceptance criteria:\n- User can complete the primary flow without API keys.\n- Generated output can be copied or exported.\n- Empty, loading, and error states are clear.\n\nTest command:\n```powershell\nnpm.cmd run lint\nnpm.cmd run build\n```\n\n## Phase 2: Add Provider Quality Carefully\nGoal: use configured AI providers for deeper output while preserving demo fallback.\n\nLikely files:\n- src/app/api/generate-kit/route.ts\n- src/lib/server-generator.ts\n- src/lib/generation-client.ts\n- src/lib/user-facing-errors.ts\n\nAcceptance criteria:\n- Provider mode reflects the user's exact input.\n- Invalid provider key, timeout, quota, invalid model, and rate limit errors are clear.\n- Demo fallback never destroys user work.\n\nTest command:\n```powershell\nnpm.cmd run check:production\n```\n\n## Phase 3: Productionize Only After The Core Works\nGoal: add account storage, logs, and provider vault only when the core kit is useful.\n\nLikely files:\n- src/lib/cloud-store.ts\n- src/lib/provider-vault.ts\n- src/lib/generation-logs.ts\n- supabase/migrations/*\n\nAcceptance criteria:\n- Local-first mode still works when Supabase is missing.\n- Provider keys stay server-side in production paths.\n- Generation logs do not contain secrets.\n\n## Do Not Build Yet\n- Team workspaces, billing, or marketplace features before beta users export useful kits.\n- Automatic repo cloning, code copying, or external repo execution.\n- Heavy rendering queues and media storage before the first workflow proves demand.",
+    "next-actions": "## Next 5 Actions\n1. Generate a kit for the strongest target niche and review every section for specificity.\n2. Open TASKS.md in Codex and implement only Phase 1 Task 1.\n3. Expand Repo & Tool Map with more high-star URL references for the user's selected domain.\n4. Test exports: Markdown, JSON, ZIP, Codex Pack, Cline Pack, Cursor Pack, Claude Code Pack.\n5. Run lint, build, product checks, export checks, and production checks.\n\n## First Coding-Agent Handoff\nUse this prompt:\n```text\nRead AGENTS.md, PROJECT_BRIEF.md, TASKS.md, TOOLS.md, API_SPEC.md, and SECURITY_CHECKLIST.md. Implement the first unchecked task only. Preserve local-first demo behavior. Do not clone external repos automatically. Before editing, inspect the target files listed in TASKS.md. After editing, run the listed test command and report changed files, checks, and risks.\n```\n\n## Review Questions Before Building More\n- Does the output match the user's exact desired output?\n- Does every task name the files to edit?\n- Does every risky integration have a fallback?\n- Can a coding agent start without asking for another brief?",
+    "test-plan": "## Test Strategy\nThe test plan should prove that the user can move from rough idea to exportable AI-coding kit without hidden setup.\n\n## Manual Flow Checklist\n- Generate a kit in demo/mock mode with only an idea and defaults.\n- Generate a kit with target users, problem, desired output, MCP, and automation enabled.\n- Open generated project detail from history.\n- Copy one section and confirm Markdown stays readable.\n- Edit a section, save it, approve it, and confirm version history records the change.\n- Regenerate one section and confirm only that section changes.\n- Export Markdown, JSON, ZIP, Codex Pack, Cline Pack, Cursor Pack, and Claude Code Pack.\n- Save provider settings locally and confirm demo mode still works if the provider is disabled.\n- Add an MCP connection.\n- View repo recommendations for an AI video app.\n- Generate AI video sample\n- Export ZIP\n- Confirm Remotion and FFmpeg are use-later items\n\n## Automated Checks\n| Check | Purpose | Command |\n|---|---|---|\n| Lint | Catch invalid React/TypeScript patterns | npm.cmd run lint |\n| Build | Catch route, type, and bundling failures | npm.cmd run build |\n| Product check | Ensure kit sections, templates, repo lanes, and exports exist | npm.cmd run check:product |\n| Export check | Ensure Markdown/JSON/ZIP/agent packs still map to files | npm.cmd run check:exports |\n| Production check | Ensure provider hardening rules stay present | npm.cmd run check:production |\n\n## Acceptance Criteria\n- No test requires a real API key for the core flow.\n- Failed provider calls produce a useful error and do not erase generated work.\n- Exported TASKS.md includes file paths, acceptance criteria, and test commands.\n- Exported TOOLS.md includes repo URLs and reference-only guidance.",
+    "deployment-plan": "## MVP Deployment\n1. Deploy the Next.js app to Vercel.\n2. Leave provider and Supabase environment variables empty for demo-only launch.\n3. Confirm / opens the builder, not a landing page.\n4. Generate one demo kit and export ZIP from production.\n5. Confirm the localStorage warning is visible in Settings.\n\n## Production Environment Variables\n```env\nNEXT_PUBLIC_SUPABASE_URL=\nNEXT_PUBLIC_SUPABASE_ANON_KEY=\nSUPABASE_SERVICE_ROLE_KEY=\nPROVIDER_KEY_ENCRYPTION_SECRET=\nRATE_LIMIT_MAX=\nRATE_LIMIT_WINDOW_MS=\n```\n\n## Supabase Launch Path\n- Create projects, project_versions, provider_profiles, generation_logs, and mcp_connections tables.\n- Enable RLS and owner scoping before inviting users.\n- Store provider keys only through server-owned provider profile routes.\n- Keep localStorage fallback available when Supabase is not configured.\n\n## Monitoring And Rollback\n- Track generation success, provider failures, rate-limit events, and export errors.\n- Roll back by disabling provider mode and keeping demo generation online.\n- Do not block users from exporting existing local projects during provider outages.",
+    "security-checklist": "## Secret Handling\n- No hardcoded API keys, tokens, or service-role keys.\n- Do not send saved provider API keys back to the browser.\n- Do not log provider API keys in console output, server logs, errors, or generation logs.\n- Local provider keys are acceptable only for local-first MVP with a visible warning.\n\n## Input And Provider Safety\n- Validate all generate, regenerate, test-provider, and export inputs with typed schemas.\n- Apply rate limits before provider calls.\n- Return structured user-facing errors for invalid key, timeout, quota, invalid model, unreachable provider, and rate limit.\n- Never execute user-supplied code.\n- Never clone external repositories automatically.\n\n## Repo Reference Safety\n- Provide repo URLs as inspiration only.\n- Ask for explicit approval before cloning, license review, or code reuse.\n- Prefer package installation and official docs over copying repository files.\n\n## Supabase Safety\n- Enable RLS for user-owned data.\n- Scope provider_profiles and generation_logs by user_id.\n- Encrypt provider keys at rest before production user rollout.\n- Document any encryption limitation in README before launch.",
+    "launch-kit": "## Positioning\nOne-line pitch: AI Video App For Small Shops That Generates Product Showcase turns rough app ideas into AI-buildable project kits for vibe coding agents.\n\n## Demo Script\n1. Open the builder at /.\n2. Enter: AI video app for small shops that generates product showcase videos from product photos and descriptions.\n3. Fill target users: Small shop owners, local retailers, Shopee/TikTok Shop sellers.\n4. Fill desired output: 30-second product showcase videos with text overlays, background music, and transitions.\n5. Generate the kit.\n6. Open Repo & Tool Map and show URL-only references.\n7. Open Task Plan and copy the first coding-agent task.\n8. Export Codex Pack or ZIP.\n\n## Beta Audience\n- Non-coders who want AI to build a first MVP.\n- Solo builders who need structure before opening Codex, Cline, Cursor, or Claude Code.\n- Agencies and freelancers who turn client ideas into implementation plans.\n\n## Launch Checklist\n- Seed 5 strong sample projects.\n- Add a short README showing demo mode, provider mode, export packs, and repo map behavior.\n- Verify all export formats.\n- Verify invalid provider key errors.\n- Publish a public demo without requiring login.\n\n## Success Metrics\n- 60% of beta users export at least one agent pack.\n- 40% copy the Start Build prompt.\n- 25% return to edit or regenerate a section within 48 hours.",
+    "codex-cline-prompts": "## Codex Implementation Prompt\n```text\nYou are the implementation agent for this VibeForge project kit. Read AGENTS.md, PROJECT_BRIEF.md, TASKS.md, TOOLS.md, API_SPEC.md, TEST_PLAN.md, and SECURITY_CHECKLIST.md first. Implement the next task from TASKS.md only. Keep the / route as the usable builder. Preserve local-first demo mode. Do not hardcode secrets. Do not clone external repositories automatically. Treat repo URLs as references only. Before editing, inspect the files named by the task. After editing, run the listed test command and report changed files, checks, and remaining risks.\n```\n\n## Cline Implementation Prompt\n```text\nUse the generated project kit as the source of truth. Start with the smallest vertical slice that proves the user's desired output. Make focused edits only. Do not add paid services, database requirements, repo cloning, or secret handling unless the task explicitly requires it. Keep exports working. Run lint/build or the task-specific command before finishing.\n```\n\n## Cursor Implementation Prompt\n```text\nRead .cursorrules, PROJECT_BRIEF.md, TASKS.md, TOOLS.md, and API_SPEC.md. Implement the next milestone with minimal file changes. Use existing app patterns. Do not rewrite unrelated UI. Preserve demo mode and export behavior. Summarize changed files and verification commands.\n```\n\n## Claude Code Review Prompt\n```text\nReview this implementation against PROJECT_BRIEF.md, TASKS.md, SECURITY_CHECKLIST.md, and TEST_PLAN.md. Prioritize bugs, security risks, broken local-first behavior, export regressions, missing validation, and unclear user-facing errors. Provide file/line findings first, then residual risks.\n```\n\n## Section Regeneration Prompt\n```text\nRegenerate only the requested section for this VibeForge kit. Make it specific to the user's idea, target users, problem, desired output, timeline, skill level, budget, stack, providers, MCP, and automation choices. Include concrete file paths, acceptance criteria, test commands, repo URL policy, and coding-agent instructions where relevant. Do not return generic advice.\n```"
+  },
+  "favorites": {},
+  "repoRecommendations": [
+    {
+      "tool": {
+        "id": "nextjs",
+        "name": "Next.js",
+        "url": "https://github.com/vercel/next.js",
+        "category": "Framework",
+        "useCase": "Full-stack React app with App Router and Vercel deployment",
+        "whenToUse": "Use for SaaS, dashboards, AI tools, and apps that need routes and API endpoints.",
+        "whenNotToUse": "Avoid for tiny static tools where Vite is enough.",
+        "howToUse": "install",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "Keep server actions free of hardcoded secrets.",
+        "costNotes": "Vercel free tier can run many MVPs; serverless usage can grow with traffic.",
+        "suggestedPrompt": "Use Next.js App Router with typed data models and build-safe environment access.",
+        "tags": [
+          "nextjs",
+          "saas",
+          "dashboard",
+          "video",
+          "ai tool"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Full-stack React app with App Router and Vercel deployment — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "shadcn-ui",
+        "name": "shadcn/ui",
+        "url": "https://github.com/shadcn-ui/ui",
+        "category": "UI",
+        "useCase": "Accessible UI components for React apps",
+        "whenToUse": "Use when building a polished SaaS, dashboard, settings, or form-heavy interface.",
+        "whenNotToUse": "Avoid if the project is static content with almost no interface surface.",
+        "howToUse": "install",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Components are copied into the repo, so keep them maintained.",
+        "costNotes": "No runtime service cost.",
+        "suggestedPrompt": "Build the UI with shadcn-style components, lucide icons, and compact responsive layouts.",
+        "tags": [
+          "ui",
+          "nextjs",
+          "dashboard",
+          "saas",
+          "video"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Accessible UI components for React apps — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "codex-cli",
+        "name": "Codex CLI",
+        "url": "https://github.com/openai/codex",
+        "category": "Agent workflow",
+        "useCase": "Main coding agent and terminal coding workflow",
+        "whenToUse": "Use when the user wants a repo-aware coding agent that can inspect, edit, and verify a local project.",
+        "whenNotToUse": "Do not copy it into the app or treat it as app source code.",
+        "howToUse": "external-tool",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "Keep project instructions explicit and never paste secrets into prompts.",
+        "costNotes": "Costs depend on the configured model/provider, not the CLI repository.",
+        "suggestedPrompt": "Read AGENTS.md, PROJECT_BRIEF.md, and TASKS.md, then implement the next task with tests.",
+        "tags": [
+          "agent",
+          "codex",
+          "workflow"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Helps turn the generated kit into controlled implementation work."
+    },
+    {
+      "tool": {
+        "id": "cline",
+        "name": "Cline",
+        "url": "https://github.com/cline/cline",
+        "category": "Agent workflow",
+        "useCase": "IDE agent in VS Code",
+        "whenToUse": "Use when the builder prefers a visual IDE workflow with file-level changes and approvals.",
+        "whenNotToUse": "Do not bundle it into a product; it is an external developer tool.",
+        "howToUse": "external-tool",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Review file changes before accepting them.",
+        "costNotes": "Model spend is controlled by the user's configured provider.",
+        "suggestedPrompt": "Use the generated TASKS.md and implement one milestone at a time with concise diffs.",
+        "tags": [
+          "agent",
+          "ide",
+          "workflow"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Helps turn the generated kit into controlled implementation work."
+    },
+    {
+      "tool": {
+        "id": "cursor",
+        "name": "Cursor",
+        "url": "https://www.cursor.com/",
+        "category": "Agent workflow",
+        "useCase": "AI-first code editor for project kit implementation",
+        "whenToUse": "Use when the builder wants editor-native AI changes guided by .cursorrules and task files.",
+        "whenNotToUse": "Do not depend on it at runtime or require it for users of the generated product.",
+        "howToUse": "external-tool",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Keep secrets out of prompts and review broad file edits before accepting them.",
+        "costNotes": "Subscription or model costs are external to the generated app.",
+        "suggestedPrompt": "Read .cursorrules, PROJECT_BRIEF.md, and TASKS.md, then implement the next small task.",
+        "tags": [
+          "agent",
+          "ide",
+          "cursor",
+          "workflow"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Helps turn the generated kit into controlled implementation work."
+    },
+    {
+      "tool": {
+        "id": "claude-code",
+        "name": "Claude Code",
+        "url": "https://www.anthropic.com/claude-code",
+        "category": "Agent workflow",
+        "useCase": "Terminal coding agent using CLAUDE.md project instructions",
+        "whenToUse": "Use when the team prefers a terminal coding agent with persistent project memory.",
+        "whenNotToUse": "Do not make it part of the app runtime or require it for the core product flow.",
+        "howToUse": "external-tool",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "Review commands and file changes before approving tool execution.",
+        "costNotes": "Costs depend on the user's Claude plan or configured account.",
+        "suggestedPrompt": "Read CLAUDE.md, PROJECT_BRIEF.md, and TASKS.md. Preserve local-first behavior and verify changes.",
+        "tags": [
+          "agent",
+          "claude",
+          "workflow"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Helps turn the generated kit into controlled implementation work."
+    },
+    {
+      "tool": {
+        "id": "zod",
+        "name": "Zod",
+        "url": "https://github.com/colinhacks/zod",
+        "category": "Validation",
+        "useCase": "TypeScript-first schema validation",
+        "whenToUse": "Use for API input validation, form validation, and data parsing.",
+        "whenNotToUse": "Already included in most starter setups.",
+        "howToUse": "install",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "None significant.",
+        "costNotes": "Free.",
+        "suggestedPrompt": "Use Zod for all API input validation and form schema definitions.",
+        "tags": [
+          "validation",
+          "typescript",
+          "forms",
+          "api"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "TypeScript-first schema validation — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "react-hook-form",
+        "name": "React Hook Form",
+        "url": "https://github.com/react-hook-form/react-hook-form",
+        "category": "UI",
+        "useCase": "Performant form management with validation",
+        "whenToUse": "Use for any form-heavy app with complex validation needs.",
+        "whenNotToUse": "Avoid only for extremely simple single-input forms.",
+        "howToUse": "install",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Combine with Zod for runtime type-safe validation.",
+        "costNotes": "Free.",
+        "suggestedPrompt": "Use React Hook Form with Zod resolver for type-safe form validation.",
+        "tags": [
+          "ui",
+          "forms",
+          "validation",
+          "saas",
+          "dashboard"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Performant form management with validation — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "sharp",
+        "name": "Sharp",
+        "url": "https://github.com/lovell/sharp",
+        "category": "Media",
+        "useCase": "High-performance image processing for Node.js",
+        "whenToUse": "Use for image resizing, format conversion, and optimization.",
+        "whenNotToUse": "Avoid in browser; server-side only.",
+        "howToUse": "install",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Native bindings may need build tools.",
+        "costNotes": "Free.",
+        "suggestedPrompt": "Use Sharp for server-side image optimization and thumbnail generation.",
+        "tags": [
+          "media",
+          "images",
+          "optimization"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "High-performance image processing for Node.js — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "cloudinary",
+        "name": "Cloudinary",
+        "url": "https://cloudinary.com/",
+        "category": "Media",
+        "useCase": "Cloud-based image and video management",
+        "whenToUse": "Use for image CDN, transformations, and media optimization.",
+        "whenNotToUse": "Avoid if simple local file serving suffices.",
+        "howToUse": "external-tool",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Costs grow with media volume.",
+        "costNotes": "Free tier; paid for bandwidth.",
+        "suggestedPrompt": "Use Cloudinary for image CDN with on-the-fly transformations.",
+        "tags": [
+          "media",
+          "cdn",
+          "images",
+          "video"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Cloud-based image and video management — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "trigger-dev",
+        "name": "Trigger.dev",
+        "url": "https://github.com/triggerdotdev/trigger.dev",
+        "category": "Automation",
+        "useCase": "Background jobs and scheduled tasks for serverless",
+        "whenToUse": "Use for background processing, cron jobs, and long-running tasks.",
+        "whenNotToUse": "Avoid if the app has no background processing needs.",
+        "howToUse": "install",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "Cloud dependency for managed service.",
+        "costNotes": "Free tier available.",
+        "suggestedPrompt": "Use Trigger.dev for background job processing and scheduled tasks.",
+        "tags": [
+          "automation",
+          "background-jobs",
+          "serverless"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Background jobs and scheduled tasks for serverless — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "inngest",
+        "name": "Inngest",
+        "url": "https://github.com/inngest/inngest",
+        "category": "Automation",
+        "useCase": "Event-driven serverless functions and workflows",
+        "whenToUse": "Use for event-driven background processing in serverless apps.",
+        "whenNotToUse": "Avoid if simple cron or queue suffices.",
+        "howToUse": "install",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "Vendor dependency; evaluate self-hosting option.",
+        "costNotes": "Free tier; paid for production.",
+        "suggestedPrompt": "Use Inngest for event-driven background workflows with retry and scheduling.",
+        "tags": [
+          "automation",
+          "events",
+          "serverless",
+          "workflow"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Event-driven serverless functions and workflows — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "medusa",
+        "name": "Medusa",
+        "url": "https://github.com/medusajs/medusa",
+        "category": "E-commerce",
+        "useCase": "Open-source headless commerce engine",
+        "whenToUse": "Use when building a custom storefront with full backend control.",
+        "whenNotToUse": "Avoid if Shopify hosted meets all needs.",
+        "howToUse": "install",
+        "difficulty": "hard",
+        "productionReadiness": "high",
+        "riskNotes": "Self-hosting requires ops capacity.",
+        "costNotes": "Free; hosting and infrastructure costs apply.",
+        "suggestedPrompt": "Use Medusa for headless commerce with Next.js storefront.",
+        "tags": [
+          "ecommerce",
+          "headless",
+          "commerce"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Open-source headless commerce engine — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "stripe",
+        "name": "Stripe",
+        "url": "https://github.com/stripe/stripe-node",
+        "category": "Payments",
+        "useCase": "Payment processing, subscriptions, and billing",
+        "whenToUse": "Use when the app needs payments, subscriptions, or invoicing.",
+        "whenNotToUse": "Avoid in MVP until the free value proposition is validated.",
+        "howToUse": "install",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "PCI compliance handled by Stripe; webhook verification is critical.",
+        "costNotes": "2.9% + 30¢ per transaction.",
+        "suggestedPrompt": "Add Stripe Checkout for subscription billing with webhook-based status sync.",
+        "tags": [
+          "payments",
+          "billing",
+          "saas",
+          "ecommerce"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Payment processing, subscriptions, and billing — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "meilisearch",
+        "name": "Meilisearch",
+        "url": "https://github.com/meilisearch/meilisearch",
+        "category": "Search",
+        "useCase": "Fast full-text search engine",
+        "whenToUse": "Use for instant search, faceted filtering, and typo tolerance.",
+        "whenNotToUse": "Avoid if simple SQL LIKE queries suffice.",
+        "howToUse": "install",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "Needs separate hosting; Meilisearch Cloud available.",
+        "costNotes": "Free self-hosted; cloud has paid tiers.",
+        "suggestedPrompt": "Add Meilisearch for instant product search with faceted filters.",
+        "tags": [
+          "search",
+          "fulltext",
+          "ecommerce"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Fast full-text search engine — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "vercel-ai-sdk",
+        "name": "Vercel AI SDK",
+        "url": "https://github.com/vercel/ai",
+        "category": "AI SDK",
+        "useCase": "Streaming AI responses in Next.js apps",
+        "whenToUse": "Use when building chat, completion, or structured generation UIs in Next.js.",
+        "whenNotToUse": "Avoid if the app has no AI-powered UI.",
+        "howToUse": "install",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Provider costs depend on model choice.",
+        "costNotes": "SDK is free; model API calls cost per token.",
+        "suggestedPrompt": "Use Vercel AI SDK for streaming chat completions with provider-agnostic hooks.",
+        "tags": [
+          "ai",
+          "nextjs",
+          "streaming",
+          "llm"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Streaming AI responses in Next.js apps — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "langchain-js",
+        "name": "LangChain.js",
+        "url": "https://github.com/langchain-ai/langchainjs",
+        "category": "AI SDK",
+        "useCase": "LLM chains, RAG pipelines, and tool-calling agents",
+        "whenToUse": "Use for complex multi-step AI workflows, RAG, or tool-use patterns.",
+        "whenNotToUse": "Avoid for simple single-prompt completions where Vercel AI SDK suffices.",
+        "howToUse": "install",
+        "difficulty": "medium",
+        "productionReadiness": "high",
+        "riskNotes": "Large dependency tree; pin versions carefully.",
+        "costNotes": "Free SDK; model and vector DB costs vary.",
+        "suggestedPrompt": "Use LangChain for RAG pipeline with document loading, splitting, embedding, and retrieval.",
+        "tags": [
+          "ai",
+          "rag",
+          "agents",
+          "llm"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "LLM chains, RAG pipelines, and tool-calling agents — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "openai-node",
+        "name": "OpenAI Node SDK",
+        "url": "https://github.com/openai/openai-node",
+        "category": "AI SDK",
+        "useCase": "Direct OpenAI and OpenAI-compatible API access",
+        "whenToUse": "Use for direct API calls to OpenAI, Azure, or compatible providers.",
+        "whenNotToUse": "Prefer Vercel AI SDK for streaming UI; use this for server-side batch work.",
+        "howToUse": "install",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Keep API keys server-side only.",
+        "costNotes": "Pay-per-token based on model.",
+        "suggestedPrompt": "Use OpenAI SDK for server-side completions with structured output and function calling.",
+        "tags": [
+          "ai",
+          "openai",
+          "llm",
+          "api"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Direct OpenAI and OpenAI-compatible API access — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "google-genai",
+        "name": "Google GenAI SDK",
+        "url": "https://github.com/google-gemini/generative-ai-js",
+        "category": "AI SDK",
+        "useCase": "Access Gemini models from JavaScript/TypeScript",
+        "whenToUse": "Use when targeting Gemini models directly without OpenRouter.",
+        "whenNotToUse": "Avoid if already using OpenRouter or Vercel AI SDK with Gemini provider.",
+        "howToUse": "install",
+        "difficulty": "easy",
+        "productionReadiness": "high",
+        "riskNotes": "Free tier has rate limits; production needs billing.",
+        "costNotes": "Gemini Flash is very cheap; Pro costs more.",
+        "suggestedPrompt": "Use Google GenAI SDK for Gemini completions with multimodal input support.",
+        "tags": [
+          "ai",
+          "gemini",
+          "google",
+          "llm"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Access Gemini models from JavaScript/TypeScript — fits the AI video app build path."
+    },
+    {
+      "tool": {
+        "id": "superpowers",
+        "name": "Superpowers",
+        "url": "https://github.com/obra/superpowers",
+        "category": "Agent methodology",
+        "useCase": "Agentic development methodology and skills",
+        "whenToUse": "Use as workflow instructions to improve agent planning, execution, and verification discipline.",
+        "whenNotToUse": "Do not treat it as a runtime dependency for the generated product.",
+        "howToUse": "external-tool",
+        "difficulty": "medium",
+        "productionReadiness": "medium",
+        "riskNotes": "Adapt the process to the repo instead of blindly importing every instruction.",
+        "costNotes": "No direct app runtime cost.",
+        "suggestedPrompt": "Adopt a skill-based workflow and keep each implementation step small, verified, and documented.",
+        "tags": [
+          "agent",
+          "skills",
+          "workflow"
+        ]
+      },
+      "lane": "use-now",
+      "reason": "Helps turn the generated kit into controlled implementation work."
+    }
+  ],
+  "readinessScore": {
+    "productClarity": 95,
+    "mvpFocus": 84,
+    "technicalFeasibility": 86,
+    "costEfficiency": 88,
+    "agentReadiness": 86,
+    "launchReadiness": 78,
+    "strengths": [
+      "Clear exportable artifact workflow",
+      "Local-first path keeps the MVP usable without accounts or API keys",
+      "Repo recommendations are separated by direct use, workflow, and reference"
+    ],
+    "risks": [
+      "Provider API calls need server-side rate limits before production",
+      "Reference repos require license review before code reuse",
+      "Video rendering should wait until content planning is validated"
+    ],
+    "nextActions": [
+      "Generate the first kit and export ZIP",
+      "Open TASKS.md in a coding agent",
+      "Build the smallest working product workflow before adding paid services"
+    ]
+  },
+  "generation": {
+    "mode": "balanced",
+    "source": "demo",
+    "generatedAt": "2026-05-25T11:31:44.181Z",
+    "fallbackReason": "No active provider was used."
+  },
+  "createdAt": "2026-05-25T11:31:44.125Z",
+  "updatedAt": "2026-05-25T11:31:44.125Z",
+  "lastOpenedAt": "2026-05-25T11:31:44.125Z"
+}

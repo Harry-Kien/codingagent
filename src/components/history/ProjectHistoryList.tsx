@@ -36,7 +36,7 @@ export function ProjectHistoryList() {
       window.clearTimeout(timer);
     };
   }, [store.mode]);
-  // ↑ Re-fetch only when mode changes (local↔cloud), not on every store ref change.
+  // Re-fetch only when mode changes (local/cloud), not on every store ref change.
 
   async function refresh() {
     const list = await storeRef.current.getProjects();
@@ -100,11 +100,11 @@ export function ProjectHistoryList() {
                 >
                   <Cloud className="h-3 w-3" />
                   {importStatus[project.id] === "imported"
-                    ? "Imported ✓"
+                    ? "Imported"
                     : importStatus[project.id] === "exists"
                       ? "Already in cloud"
                       : importStatus[project.id] === "error"
-                        ? "Failed — retry"
+                        ? "Failed - retry"
                         : project.name}
                 </Button>
               ))}
@@ -126,7 +126,7 @@ export function ProjectHistoryList() {
                 </div>
                 <p className="mt-2 line-clamp-2 max-w-4xl text-sm leading-6 text-zinc-600">{project.input.idea}</p>
                 <p className="mt-2 text-xs text-zinc-500">
-                  Created {new Date(project.createdAt).toLocaleString()} · Stack: {project.input.preferredStack.join(", ") || "Recommended defaults"}
+                  Created {new Date(project.createdAt).toLocaleString()} - Stack: {project.input.preferredStack.join(", ") || "Recommended defaults"}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

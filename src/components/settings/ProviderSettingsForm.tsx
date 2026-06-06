@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { KeyRound, PlugZap, Plus, Save, Trash2 } from "lucide-react";
 import type { ProviderSettings } from "@/types/vibeforge";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export function ProviderSettingsForm() {
         visionModel: "google/gemini-2.5-flash",
         maxBudgetPerGeneration: 0.5,
         temperature: 0.4,
-        tokenLimit: 6000,
+        tokenLimit: 16000,
         enabled: true,
       },
     ]);
@@ -176,10 +176,11 @@ function Field({
   type?: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div>
-      <Label>{label}</Label>
-      <Input type={type} value={value} onChange={(event) => onChange(event.target.value)} />
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }

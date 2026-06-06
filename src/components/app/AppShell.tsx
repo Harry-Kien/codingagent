@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import {
   Boxes,
+  Bot,
+  LayoutDashboard,
+  Cpu,
   FolderClock,
   Home,
   Info,
@@ -21,8 +24,10 @@ import { SyncStatusBadge } from "@/components/auth/SyncStatusBadge";
 
 const navItems = [
   { href: "/", label: "Builder", icon: Home, description: "Create a project kit" },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, description: "Launch cockpit" },
   { href: "/projects", label: "Projects", icon: FolderClock, description: "History & exports" },
   { href: "/repo-map", label: "Repo Map", icon: Map, description: "Tools & repos" },
+  { href: "/agent-kit", label: "Agent Kit", icon: Bot, description: "Agent roles" },
   { href: "/settings", label: "Settings", icon: Settings, description: "Providers & MCP" },
   { href: "/about", label: "About", icon: Info, description: "How it works" },
 ];
@@ -39,6 +44,8 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const prevPathname = useRef(pathname);
+  const serverProviderEnabled = process.env.NEXT_PUBLIC_VIBEFORGE_SERVER_PROVIDER_ENABLED === "true";
+  const serverProviderName = process.env.NEXT_PUBLIC_VIBEFORGE_SERVER_PROVIDER_NAME || "Server AI";
 
   // Close mobile menu on navigation (avoids direct setState in effect)
   useEffect(() => {
@@ -99,11 +106,11 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 
         <div className="mt-2 rounded-lg border border-teal-100 bg-teal-50/60 p-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-teal-800">
-            <Sparkles className="h-3.5 w-3.5" />
-            Demo mode ready
+            {serverProviderEnabled ? <Cpu className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {serverProviderEnabled ? "Server AI ready" : "Demo mode ready"}
           </div>
           <p className="mt-1 text-[11px] leading-4 text-teal-700">
-            Works without API keys.
+            {serverProviderEnabled ? serverProviderName : "Works without API keys."}
           </p>
         </div>
       </aside>

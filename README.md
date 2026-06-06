@@ -10,7 +10,7 @@
 
 ## What is VibeForge?
 
-VibeForge is a local-first AI project operating system. You describe an app idea in plain language, and VibeForge generates a structured project kit — 18 exportable sections covering strategy, architecture, tasks, security, deployment, and coding agent prompts.
+VibeForge is a local-first AI project operating system. You describe an app idea in plain language, and VibeForge generates a structured project kit with exportable sections covering product brief, target users, core flow, scope, architecture, data models, UI screens, implementation tasks, tests, risks, launch notes, and coding-agent prompts.
 
 **Core workflow:**
 
@@ -22,13 +22,48 @@ Works entirely in demo mode without API keys. Optionally connects to OpenAI, Gem
 
 ---
 
+## Current Product Surface
+
+- `/` - usable builder and create task/run flow.
+- `/dashboard` - launch cockpit with latest run, product flow, and demo checklist.
+- `/projects` - project/repo management history.
+- `/projects/[id]` - result/report view with agent plan tabs, quality checks, section editing, copy, regenerate, and exports.
+- `/repo-map` - curated/live repo map viewer with reference-only policy.
+- `/agent-kit` - eight agent roles: Code Reviewer, Bug Fixer, UI Builder, Repo Mapper, Test Writer, Documentation, Deployment, and Product Manager.
+- `/settings` - local provider settings and MCP connection planner.
+
+Required launch docs are maintained in `PRODUCT_AUDIT.md`, `PRODUCT_STRUCTURE.md`, `REPO_MAP.md`, `repo-map.json`, `AGENT_KIT.md`, `MEMORY_DESIGN.md`, `ROADMAP.md`, `UPGRADE_REPORT.md`, and `DEPLOY_REPORT.md`.
+
+---
+
+## Vibe Coding Output Quality
+
+VibeForge is designed to produce more than a generic AI answer. Each generated kit should give builders and coding agents:
+
+- Product requirements tied to the user's exact input
+- MVP scope with build-first and do-not-build-yet boundaries
+- Architecture notes for frontend, backend, storage, provider layer, auth, deployment, and risks
+- Task plans with phases, file paths, acceptance criteria, and test commands
+- Repo references as URLs only, with instructions for how an AI agent should use them
+- `AI_HANDOFF.md` as the single upload-ready brief for Codex, Cline, Cursor, Claude Code, or another AI coding agent
+- Prompt packs for Codex, Cline, Cursor, Claude Code, section regeneration, and security review
+- Exportable Markdown files that can be dropped into another coding-agent workflow
+
+### Repo reference policy
+
+Repo references are inspiration and implementation guidance only. VibeForge does not clone external repos, run code from external repos, or copy source code into your project. If a user's idea does not strongly match the built-in repo map, the generated `REPO_REFERENCES.md` includes GitHub search URLs based on the app type, desired output, and stack so the agent can inspect likely references safely.
+
+Use repo URLs to study README files, architecture patterns, package choices, and workflow ideas. Clone or reuse code only after explicit user approval and license review.
+
+---
+
 ## Features
 
 | Category | Details |
 |---|---|
-| **18 Kit Sections** | Product strategy, MVP scope, roadmap, stack, repo map, AI plan, database, API spec, UI screens, user flows, agent rules, tasks, next actions, tests, deployment, security, launch kit, Codex/Cline prompts |
+| **20 Kit Sections** | Product strategy, MVP scope, roadmap, stack, repo map, AI plan, database, API spec, UI screens, user flows, agent rules, AI handoff, tasks, implementation phases, next actions, tests, deployment, security, launch kit, Codex/Cline prompts |
 | **4 Agent Export Packs** | Codex, Cline, Cursor, Claude Code — each includes the right files for that agent's workflow |
-| **6 App Templates** | AI video, SaaS dashboard, n8n automation, internal tool, content tool, e-commerce |
+| **Domain Templates & Presets** | AI video, SaaS dashboard, n8n automation, internal tool, content tool, e-commerce, education, clinic, local business, marketplace, freelancer CRM, habit tracker mobile, and custom web apps |
 | **Multi-Provider AI** | OpenAI-compatible, OpenRouter, Gemini, Anthropic, Ollama, custom endpoints |
 | **Demo Mode** | Full deterministic generation without any API keys |
 | **Section Workspace** | Edit sections inline, track status (Draft/Approved/Needs review), version history |
@@ -148,11 +183,11 @@ cp .env.example .env.local
 
 ## Demo / Mock Mode
 
-VibeForge works without any API keys. Demo mode generates deterministic project kits using built-in templates and repo data. This is the default behavior when no provider is configured.
+VibeForge works without any API keys. Demo mode generates deterministic project kits using built-in templates, domain presets, project type detection, rule-based enrichment, repo recommendations, and structured section validation. This is the default behavior when no provider is configured.
 
 To try it:
 1. Open the Builder (`/`)
-2. Click **"Load AI video sample"** or type your own idea
+2. Click **"Load AI video sample"** or type your own idea, such as `local CRM for freelancers` or `habit tracker mobile app`
 3. Click **"Generate project kit"**
 4. Browse sections, export files, and explore the project cockpit
 
@@ -193,13 +228,51 @@ For cloud sync and authentication:
 
 The app automatically detects Supabase and shows login/sync options.
 
-## Production setup
+## Production Setup & Production Readiness Checklist
 
-1. Run both Supabase migrations.
-2. Configure public Supabase browser variables.
-3. Configure server-only `SUPABASE_SERVICE_ROLE_KEY` and `VIBEFORGE_PROVIDER_KEY_SECRET`.
-4. Use saved provider profiles for production provider calls.
-5. Verify generation logs and rate limiting before sharing the app publicly.
+Production setup is the required hardening path before deploying VibeForge for public beta or shared team usage.
+
+Deploying VibeForge to production for public beta users requires hardening the system against resource limits, multi-instance scaling, and API rate limits. Follow this production checklist:
+
+### 1. Multi-Instance Rate Limiting (Redis Abstraction)
+The default in-memory rate limiter tracks requests in-memory per server process, which is insufficient for multi-instance load-balanced production clusters (like Vercel, AWS ECS, or Kubernetes).
+*   **Action**: Set the following environment variables to activate the zero-dependency Upstash/Redis HTTP rate limiter:
+    ```env
+    VIBEFORGE_REDIS_REST_URL=https://your-upstash-redis-rest-url.com
+    VIBEFORGE_REDIS_REST_TOKEN=your-upstash-redis-rest-token
+    ```
+*   **Benefit**: Request limits are synchronized globally across all server instances, preventing API abuse while maintaining a fast, zero-dependency offline fallback if Redis goes down.
+
+### 2. OpenRouter Default Server Provider Setup
+For public beta deployments, you can configure a default server-side provider via env so users can use the generation engine instantly without putting in their own keys:
+*   **Action**: Add these variables to your server environment:
+    ```env
+    VIBEFORGE_OPENROUTER_API_KEY=sk-or-v1-your-key
+    VIBEFORGE_OPENROUTER_PROVIDER_NAME=OpenRouter
+    VIBEFORGE_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+    VIBEFORGE_OPENROUTER_DEFAULT_MODEL=moonshotai/kimi-k2.6:free
+    VIBEFORGE_OPENROUTER_CHEAP_MODEL=openrouter/free
+    VIBEFORGE_OPENROUTER_STRONG_MODEL=moonshotai/kimi-k2.6:free
+    VIBEFORGE_OPENROUTER_TOKEN_LIMIT=12000
+    VIBEFORGE_OPENROUTER_TEMPERATURE=0.4
+    NEXT_PUBLIC_VIBEFORGE_SERVER_PROVIDER_ENABLED=true
+    NEXT_PUBLIC_VIBEFORGE_SERVER_PROVIDER_NAME=OpenRouter
+    NEXT_PUBLIC_VIBEFORGE_SERVER_PROVIDER_MODEL=kimi-k2.6:free
+    ```
+*   **Security**: The `VIBEFORGE_OPENROUTER_API_KEY` stays strictly on the server-side and is never exposed to the client.
+
+### 3. Asynchronous Job Polling Scaffold
+Deep planning generations can exceed standard serverless function timeout limits (10s on Vercel Hobby, 60s on Pro).
+*   **Action**: Utilize the async polling queue API scaffolded at `/api/generation-job`. For full production:
+    1.  Replace the mock in-memory job store with Upstash Redis or a PostgreSQL job table.
+    2.  Spawn background worker processes (e.g., BullMQ, Inngest, or Trigger.dev) to perform the kit generation.
+    3.  Update the frontend UI to poll `/api/generation-job?jobId=...` dynamically.
+
+### 4. Supabase Secure Vault & RLS Rules
+If enabling user database provider profiles:
+*   **Action**: Run both Supabase migrations: `supabase/migrations/001_initial_schema.sql` and `supabase/migrations/002_production_provider_vault.sql`.
+*   **Encryption**: Set `VIBEFORGE_PROVIDER_KEY_SECRET` to a cryptographically secure 32-character key for AES-256-GCM encryption of user keys.
+*   **Safety**: Ensure Supabase Row Level Security (RLS) is enabled on `provider_profiles` and `projects` tables so users can only fetch their own files.
 
 ### Production Provider Vault
 
@@ -249,11 +322,11 @@ These are stored locally and exported with your project kit.
 |---|---|
 | **Markdown** | All sections as a single `.md` file |
 | **JSON** | Full project data as `.json` |
-| **ZIP** | Each section as a separate `.md` file in a ZIP archive |
-| **Codex Pack** | `AGENTS.md`, `PROJECT_BRIEF.md`, `TASKS.md`, `TOOLS.md`, `NEXT_ACTIONS.md`, `CODEX_PROMPTS.md` |
-| **Cline Pack** | `.clinerules`, `PROJECT_BRIEF.md`, `TASKS.md`, `NEXT_ACTIONS.md` |
-| **Cursor Pack** | `.cursorrules`, `PROJECT_BRIEF.md`, `TASKS.md`, `NEXT_ACTIONS.md` |
-| **Claude Code Pack** | `CLAUDE.md`, `PROJECT_BRIEF.md`, `TASKS.md`, `NEXT_ACTIONS.md` |
+| **ZIP** | Each section as a separate `.md` file in a ZIP archive, including `AI_HANDOFF.md` |
+| **Codex Pack** | `AGENTS.md`, `PROJECT_BRIEF.md`, `PRODUCT_REQUIREMENTS.md`, `TASKS.md`, `REPO_REFERENCES.md`, `IMPLEMENTATION_PHASES.md`, `TEST_PLAN.md`, `SECURITY_CHECKLIST.md`, `AI_HANDOFF.md`, `NEXT_ACTIONS.md`, `VIBE_CODING_PROMPTS.md`, `CODEX_PROMPTS.md` |
+| **Cline Pack** | `.clinerules`, `PROJECT_BRIEF.md`, `PRODUCT_REQUIREMENTS.md`, `TASKS.md`, `REPO_REFERENCES.md`, `AI_HANDOFF.md`, `NEXT_ACTIONS.md`, `VIBE_CODING_PROMPTS.md` |
+| **Cursor Pack** | `.cursorrules`, `PROJECT_BRIEF.md`, `PRODUCT_REQUIREMENTS.md`, `TASKS.md`, `REPO_REFERENCES.md`, `AI_HANDOFF.md`, `NEXT_ACTIONS.md`, `VIBE_CODING_PROMPTS.md` |
+| **Claude Code Pack** | `CLAUDE.md`, `PROJECT_BRIEF.md`, `PRODUCT_REQUIREMENTS.md`, `TASKS.md`, `REPO_REFERENCES.md`, `AI_HANDOFF.md`, `NEXT_ACTIONS.md`, `VIBE_CODING_PROMPTS.md` |
 
 ---
 
@@ -266,8 +339,11 @@ These are stored locally and exported with your project kit.
 | `npm run start` | Start production server |
 | `npm run lint` | ESLint check |
 | `npm run test:e2e` | Playwright E2E tests |
-| `npm run check:product` | Product integrity checks |
-| `npm run check:exports` | Export pack verification |
+| `npm run check:product` | Product integrity checks (sections, templates, repo count, quality markers) |
+| `npm run check:exports` | Export pack verification (all packs, file mappings, quality terms) |
+| `npm run check:sample-output` | Sample project-kit output verification across common ideas |
+| `npm run check:production` | Production hardening checks (vault, logs, rate limits, secrets) |
+| `npm run check:launch` | Launch readiness verification |
 
 ---
 
@@ -299,12 +375,14 @@ Tests cover:
 ### How to run checks
 
 ```bash
-npm run lint
-npm run build
-npm run check:product
-npm run check:exports
-npm run check:production
-npm run test:e2e
+npm.cmd run lint
+npm.cmd run build
+npm.cmd run check:product
+npm.cmd run check:exports
+npm.cmd run check:production
+npm.cmd run check:sample-output
+npm.cmd run test:e2e -- --list
+npm.cmd run test:e2e
 ```
 
 ---
@@ -314,10 +392,25 @@ npm run test:e2e
 ### Vercel (Recommended)
 
 ```bash
-npx vercel
+npx.cmd vercel deploy --prod --yes
 ```
 
 Set environment variables in the Vercel dashboard if using Supabase.
+
+### Production audit checklist
+
+Before promoting production, run:
+
+```bash
+npm.cmd run lint
+npx.cmd tsc --noEmit
+npm.cmd run build
+npm.cmd run check:product
+npm.cmd run check:exports
+npm.cmd run check:sample-output
+```
+
+After deploy, verify `https://vibeforge-seven.vercel.app/` in a real browser across desktop, tablet, and mobile. Check the root builder, project generation in demo mode, project history, Markdown/JSON/ZIP exports, section copy/regeneration, settings persistence, MCP connections, repo recommendations for an AI video app, console errors, and network failures.
 
 ### Docker
 

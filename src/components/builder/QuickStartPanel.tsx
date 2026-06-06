@@ -8,7 +8,7 @@ const DISMISSED_KEY = "vibeforge.quickstart.dismissed";
 
 /**
  * Lightweight onboarding panel shown at the top of the builder.
- * Dismissible — once dismissed, stays hidden via localStorage.
+ * Dismissible - once dismissed, stays hidden via localStorage.
  * Does NOT block the builder flow.
  */
 export function QuickStartPanel() {
@@ -44,7 +44,7 @@ export function QuickStartPanel() {
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <Step number={1} title="Describe your idea" description="Enter your app concept, constraints, and build context." />
-        <Step number={2} title="Generate kit" description="Click Generate — VibeForge creates 18 exportable sections." />
+        <Step number={2} title="Generate kit" description="Click Generate - VibeForge creates 18 exportable sections." />
         <Step number={3} title="Export to agent" description="Download a Codex/Cline/Cursor pack and hand it to your coding agent." />
       </div>
     </div>

@@ -7,10 +7,12 @@ import { resolveProviderForRequest } from "@/lib/provider-vault";
 import { getRequestUser } from "@/lib/server-auth";
 import { classifyUserFacingError, userFacingError } from "@/lib/user-facing-errors";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const startedAt = new Date().toISOString();
   const ip = getClientIp(request);
-  const rl = checkRateLimit(ip, { maxRequests: 20, windowMs: 60_000 });
+  const rl = await checkRateLimit(ip, { maxRequests: 20, windowMs: 60_000 });
   if (!rl.allowed) {
     void writeGenerationLog({
       route: "regenerate-section",

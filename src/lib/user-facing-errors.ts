@@ -86,14 +86,16 @@ export function userFacingError(code: UserFacingErrorCode, override?: Partial<Us
 
 export function classifyUserFacingError(message?: string | null): UserFacingError {
   const value = (message ?? "").toLowerCase();
-  if (value.includes("api key") || value.includes("permissions") || value.includes("rejected")) {
+  if (value.includes("api key") || value.includes("permissions") || value.includes("rejected") || value.includes("401") || value.includes("403")) {
     return userFacingError("invalid_api_key");
   }
-  if (value.includes("timed out") || value.includes("timeout")) return userFacingError("provider_timeout");
-  if (value.includes("quota") || value.includes("credit") || value.includes("billing") || value.includes("rate limit")) {
+  if (value.includes("timed out") || value.includes("timeout") || value.includes("504") || value.includes("408")) {
+    return userFacingError("provider_timeout");
+  }
+  if (value.includes("quota") || value.includes("credit") || value.includes("billing") || value.includes("rate limit") || value.includes("429")) {
     return userFacingError("quota_exceeded");
   }
-  if (value.includes("model") && (value.includes("not found") || value.includes("unavailable"))) {
+  if (value.includes("model") || value.includes("invalid_model") || value.includes("model_not_found") || value.includes("404")) {
     return userFacingError("invalid_model");
   }
   if (value.includes("supabase") || value.includes("vault is not configured")) {
@@ -101,7 +103,16 @@ export function classifyUserFacingError(message?: string | null): UserFacingErro
   }
   if (value.includes("sign in") || value.includes("signed-in")) return userFacingError("unauthorized");
   if (value.includes("missing") || value.includes("not configured")) return userFacingError("provider_not_configured");
-  if (value.includes("unreachable") || value.includes("fetch failed") || value.includes("service is unavailable")) {
+  if (
+    value.includes("unreachable") ||
+    value.includes("fetch failed") ||
+    value.includes("service is unavailable") ||
+    value.includes("blocked") ||
+    value.includes("network") ||
+    value.includes("econnrefused") ||
+    value.includes("dns") ||
+    value.includes("failed to fetch")
+  ) {
     return userFacingError("provider_unreachable");
   }
   return userFacingError("generation_failed", message ? { message } : undefined);

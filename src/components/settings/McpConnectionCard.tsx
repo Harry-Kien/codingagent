@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Clipboard, Plus, Trash2 } from "lucide-react";
 import type { McpConnection } from "@/types/vibeforge";
 import { Button } from "@/components/ui/button";
@@ -132,10 +132,11 @@ function Field({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div>
-      <Label>{label}</Label>
-      <Input value={value} onChange={(event) => onChange(event.target.value)} />
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }

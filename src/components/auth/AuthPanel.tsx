@@ -21,10 +21,10 @@ export function AuthPanel() {
       <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3">
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
           <AlertCircle className="h-3.5 w-3.5" />
-          <span>Local-only mode</span>
+          <span>Browser storage</span>
         </div>
         <p className="mt-1 text-[11px] leading-4 text-zinc-400">
-          Supabase not configured. Projects are stored in your browser.
+          Cloud sync is off. Projects are saved in this browser.
         </p>
       </div>
     );

@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-06-05",
+  "app": "VibeForge",
+  "routes": [
+    { "path": "/", "file": "src/app/page.tsx", "purpose": "Usable builder" },
+    { "path": "/dashboard", "file": "src/app/dashboard/page.tsx", "purpose": "Launch cockpit and product flow" },
+    { "path": "/projects", "file": "src/app/projects/page.tsx", "purpose": "Project history and management" },
+    { "path": "/projects/[id]", "file": "src/app/projects/[id]/page.tsx", "purpose": "Generated kit result/report" },
+    { "path": "/repo-map", "file": "src/app/repo-map/page.tsx", "purpose": "Repo/tool map viewer" },
+    { "path": "/agent-kit", "file": "src/app/agent-kit/page.tsx", "purpose": "Agent role catalog" },
+    { "path": "/settings", "file": "src/app/settings/page.tsx", "purpose": "Provider and MCP settings" },
+    { "path": "/about", "file": "src/app/about/page.tsx", "purpose": "Product explanation" }
+  ],
+  "apis": [
+    { "path": "/api/health", "file": "src/app/api/health/route.ts" },
+    { "path": "/api/generate-kit", "file": "src/app/api/generate-kit/route.ts" },
+    { "path": "/api/generation-job", "file": "src/app/api/generation-job/route.ts" },
+    { "path": "/api/improve-section", "file": "src/app/api/improve-section/route.ts" },
+    { "path": "/api/regenerate-section", "file": "src/app/api/regenerate-section/route.ts" },
+    { "path": "/api/test-provider", "file": "src/app/api/test-provider/route.ts" },
+    { "path": "/api/trending-repos", "file": "src/app/api/trending-repos/route.ts" },
+    { "path": "/api/provider-profiles", "file": "src/app/api/provider-profiles/route.ts" },
+    { "path": "/api/provider-profiles/[id]", "file": "src/app/api/provider-profiles/[id]/route.ts" }
+  ],
+  "componentMap": {
+    "shell": ["src/components/app/AppShell.tsx"],
+    "builder": ["src/components/builder/BuilderForm.tsx", "src/components/builder/TemplateGallery.tsx", "src/components/builder/QuickStartPanel.tsx"],
+    "kit": ["src/components/kit/ProjectDetailClient.tsx", "src/components/kit/ProjectKitTabs.tsx", "src/components/kit/MarkdownSection.tsx", "src/components/kit/ReadinessScore.tsx", "src/components/kit/StartBuildPanel.tsx", "src/components/kit/PostGenerateCTA.tsx"],
+    "history": ["src/components/history/ProjectHistoryList.tsx"],
+    "repo": ["src/components/repo/RepoRecommendationPanel.tsx", "src/components/repo/RepoCard.tsx"],
+    "settings": ["src/components/settings/ProviderSettingsForm.tsx", "src/components/settings/McpConnectionCard.tsx"],
+    "ui": ["src/components/ui/button.tsx", "src/components/ui/card.tsx", "src/components/ui/badge.tsx", "src/components/ui/form.tsx", "src/components/ui/empty-state.tsx", "src/components/ui/toast.tsx"]
+  },
+  "dependencyMap": {
+    "framework": ["next", "react", "react-dom", "typescript"],
+    "ui": ["lucide-react", "class-variance-authority", "tailwind-merge", "radix-ui"],
+    "forms": ["react-hook-form", "@hookform/resolvers", "zod"],
+    "storage": ["@supabase/supabase-js"],
+    "exports": ["jszip"],
+    "testing": ["@playwright/test", "eslint"]
+  },
+  "riskMap": [
+    "Provider-backed generation depends on optional env/provider settings.",
+    "LocalStorage provider keys are for local MVP only, not shared-browser production.",
+    "Live trending repos require network access and should degrade to curated data.",
+    "Supabase production paths require RLS verification before public multi-user launch.",
+    "Reference repos must remain URL-only unless license review and user approval happen."
+  ],
+  "todoFixmeScan": [
+    "No source TODO/FIXME implementation debt found outside intentional scanner strings and agent prompts."
+  ]
+}

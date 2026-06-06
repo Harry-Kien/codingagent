@@ -6,11 +6,14 @@ import { writeGenerationLog } from "@/lib/generation-logs";
 import { resolveProviderForRequest } from "@/lib/provider-vault";
 import { getRequestUser } from "@/lib/server-auth";
 import { classifyUserFacingError, userFacingError } from "@/lib/user-facing-errors";
+import { logInfo, reportError } from "@/lib/monitoring";
+
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const startedAt = new Date().toISOString();
   const ip = getClientIp(request);
-  const rl = checkRateLimit(ip, { maxRequests: 10, windowMs: 60_000 });
+  const rl = await checkRateLimit(ip, { maxRequests: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     void writeGenerationLog({
       route: "generate-kit",
@@ -29,7 +32,7 @@ export async function POST(request: Request) {
   const parsed = generateKitRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    console.warn("[API] generate-kit: invalid request body");
+    logInfo("generate-kit invalid request body", { route: "/api/generate-kit", ip: ip ?? "unknown" });
     return NextResponse.json({ error: userFacingError("invalid_request") }, { status: 400 });
   }
 
@@ -54,7 +57,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: classifyUserFacingError(resolved.error) }, { status: 400 });
     }
 
-    console.info(`[API] generate-kit: starting (appType=${parsed.data.input.appType})`);
+    logInfo("generate-kit started", { route: "/api/generate-kit", appType: parsed.data.input.appType });
     const project = await generateProjectKitServer(
       parsed.data.input,
       resolved.provider,
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
       startedAt,
       error: project.generation?.fallbackReason,
     });
-    console.info(`[API] generate-kit: success (id=${project.id})`);
+    logInfo("generate-kit completed", { route: "/api/generate-kit", projectId: project.id, source: project.generation?.source ?? "unknown" });
     return NextResponse.json({ project });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed.";
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
       startedAt,
       error: message,
     });
-    console.error("[API] generate-kit: failed", message);
+    await reportError(err, { route: "/api/generate-kit", mode: parsed.data.generationMode });
     return NextResponse.json({ error: classifyUserFacingError(message) }, { status: 500 });
   }
 }

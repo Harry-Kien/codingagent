@@ -7,10 +7,12 @@ import { resolveProviderForRequest } from "@/lib/provider-vault";
 import { getRequestUser } from "@/lib/server-auth";
 import { classifyUserFacingError, userFacingError } from "@/lib/user-facing-errors";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const startedAt = new Date().toISOString();
   const ip = getClientIp(request);
-  const rl = checkRateLimit(ip, { maxRequests: 10, windowMs: 60_000 });
+  const rl = await checkRateLimit(ip, { maxRequests: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     void writeGenerationLog({
       route: "test-provider",
@@ -26,8 +28,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json().catch(() => null);
-  const parsed = testProviderRequestSchema.safeParse(body);
+  // Support empty body by falling back to {} to test server-side environment provider
+  let body = null;
+  try {
+    const text = await request.text();
+    if (text.trim()) {
+      body = JSON.parse(text);
+    }
+  } catch {
+    body = {};
+  }
+  const parsed = testProviderRequestSchema.safeParse(body || {});
 
   if (!parsed.success) {
     const error = userFacingError("invalid_request");

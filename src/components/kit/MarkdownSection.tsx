@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, Pencil, RefreshCw, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Pencil, RefreshCw, Save, Wand2 } from "lucide-react";
 import type { ProjectKit, SectionStatus } from "@/types/vibeforge";
 import { CopyButton } from "@/components/CopyButton";
 import { ExportButton } from "@/components/ExportButton";
@@ -22,14 +22,20 @@ export function MarkdownSection({
   onSave,
   onSetStatus,
   onRegenerate,
+  onImprove,
   isRegenerating = false,
+  isImproving = false,
+  qualityIssues = [],
 }: {
   project: ProjectKit;
   sectionKey: string;
   onSave: (sectionKey: string, content: string) => void;
   onSetStatus: (sectionKey: string, status: SectionStatus) => void;
   onRegenerate: (sectionKey: string) => void | Promise<void>;
+  onImprove?: (sectionKey: string) => void | Promise<void>;
   isRegenerating?: boolean;
+  isImproving?: boolean;
+  qualityIssues?: string[];
 }) {
   const content = project.sections[sectionKey] ?? "";
   const meta = project.sectionMeta?.[sectionKey];
@@ -100,12 +106,33 @@ export function MarkdownSection({
             </Button>
             <CopyButton text={isEditing ? draft : content} />
             <ExportButton project={project} mode="section" sectionKey={sectionKey} />
+            {onImprove ? (
+              <Button variant="secondary" size="sm" onClick={() => onImprove(sectionKey)} disabled={isImproving}>
+                <Wand2 className={`h-4 w-4 ${isImproving ? "animate-pulse" : ""}`} />
+                {isImproving ? "Improving" : qualityIssues.length ? "Improve weak section" : "Improve"}
+              </Button>
+            ) : null}
             <Button variant="outline" size="sm" onClick={() => onRegenerate(sectionKey)} disabled={isRegenerating}>
               <RefreshCw className={`h-4 w-4 ${isRegenerating ? "animate-spin" : ""}`} />
               {isRegenerating ? "Regenerating" : "Regenerate"}
             </Button>
           </div>
         </div>
+        {qualityIssues.length ? (
+          <div className="border-b border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-semibold">This section needs public-beta polish.</p>
+                <ul className="mt-1 list-disc space-y-1 pl-4 text-xs leading-5">
+                  {qualityIssues.slice(0, 3).map((issue) => (
+                    <li key={issue}>{issue}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
           <article className="max-h-[720px] overflow-auto p-5">
             {isEditing ? (

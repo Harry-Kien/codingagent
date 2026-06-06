@@ -11,10 +11,21 @@ const scoreItems = [
 ] as const;
 
 export function ReadinessScore({ score }: { score: ReadinessScoreType }) {
+  const overall = Math.round(
+    scoreItems.reduce((total, [, key]) => total + score[key], 0) / scoreItems.length,
+  );
+  const label = overall >= 90 ? "Agent-ready" : overall >= 80 ? "Strong draft" : overall >= 70 ? "Needs polish" : "Needs work";
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Build Readiness</CardTitle>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>Build Readiness</CardTitle>
+          <div className="inline-flex w-fit items-center gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-1.5 text-sm font-semibold text-teal-900">
+            <span>{label}</span>
+            <span className="font-mono">{overall}/100</span>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

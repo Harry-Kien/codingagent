@@ -1,15 +1,21 @@
 "use client";
 
 import { ArrowRight, CheckCircle2, TerminalSquare } from "lucide-react";
-import type { ProjectKit } from "@/types/vibeforge";
+import type { ProjectKit, ReadinessScore } from "@/types/vibeforge";
 import { CopyButton } from "@/components/CopyButton";
 import { ExportButton } from "@/components/ExportButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function StartBuildPanel({ project }: { project: ProjectKit }) {
+export function StartBuildPanel({
+  project,
+  readinessScore = project.readinessScore,
+}: {
+  project: ProjectKit;
+  readinessScore?: ReadinessScore;
+}) {
   const prompt = firstBuildPrompt(project);
-  const actions = project.readinessScore.nextActions.length
-    ? project.readinessScore.nextActions
+  const actions = readinessScore.nextActions.length
+    ? readinessScore.nextActions
     : [
         "Export the Codex Pack.",
         "Open the project folder in Codex or Cline.",
