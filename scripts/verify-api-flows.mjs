@@ -115,6 +115,7 @@ const providerTest = await call(
 rows.push({ name: "test-provider", ...providerTest, optional: !REQUIRE_PROVIDER });
 if (REQUIRE_PROVIDER && !providerTest.ok) failures.push(`test-provider: ${providerTest.error || `HTTP ${providerTest.status}`}`);
 if (REQUIRE_PROVIDER) assert(providerTest.json?.ok === true, "test-provider: provider did not connect.");
+if (!REQUIRE_PROVIDER) assert(providerTest.status === 200, "test-provider: diagnostic provider failures should return HTTP 200 with ok=false.");
 
 const generate = await call(
   "generate-kit",

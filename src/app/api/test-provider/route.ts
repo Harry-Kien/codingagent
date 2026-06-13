@@ -83,7 +83,7 @@ export async function POST(request: Request) {
   });
   if (!result.ok) {
     const error = classifyUserFacingError(result.message);
-    return NextResponse.json({ ...result, message: error.message, error }, { status: 400 });
+    return NextResponse.json({ ...result, ok: false, message: error.message, error }, { status: 200 });
   }
 
   return NextResponse.json(result, { status: 200 });
