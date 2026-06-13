@@ -38,6 +38,15 @@ function sanitizeLogPayload(payload: Record<string, unknown>) {
       timestamp: new Date().toISOString(),
       service: "vibeforge",
       ...payload,
-    }).filter(([key, value]) => !blocked.test(key) && typeof value !== "function"),
+    })
+      .filter(([key, value]) => !blocked.test(key) && typeof value !== "function")
+      .map(([key, value]) => [key, typeof value === "string" ? redactSecretText(value) : value]),
   );
+}
+
+function redactSecretText(value: string) {
+  return value
+    .replace(/\b(sk-[a-z0-9_-]{8,}|sk-or-v1-[a-z0-9_-]{8,}|AIza[a-z0-9_-]{12,})\b/gi, "[redacted-secret]")
+    .replace(/\b(Bearer\s+)[a-z0-9._-]{12,}\b/gi, "$1[redacted-secret]")
+    .replace(/\b(api[_-]?key|authorization|password|secret|token)\s*[:=]\s*['\"]?[^'\"\s,;]+/gi, "$1=[redacted-secret]");
 }

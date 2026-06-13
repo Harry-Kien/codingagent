@@ -30,7 +30,7 @@ export async function writeGenerationLog(input: GenerationLogInput) {
       providerName: input.providerName,
       model: input.model,
       mode: input.mode,
-      error: input.error,
+      error: sanitizeGenerationLogValue(input.error),
     });
     return;
   }
@@ -45,7 +45,7 @@ export async function writeGenerationLog(input: GenerationLogInput) {
     generation_mode: input.mode ?? null,
     status: input.status,
     source: input.source,
-    error_message: input.error ?? null,
+    error_message: sanitizeGenerationLogValue(input.error),
     started_at: input.startedAt,
     finished_at: finishedAt,
     duration_ms: Math.max(0, new Date(finishedAt).getTime() - new Date(input.startedAt).getTime()),
@@ -54,4 +54,12 @@ export async function writeGenerationLog(input: GenerationLogInput) {
   if (error) {
     console.warn("[VibeForge] generation log failed:", error.message);
   }
+}
+
+function sanitizeGenerationLogValue(value?: string | null) {
+  if (!value) return null;
+  return value
+    .replace(/\b(sk-[a-z0-9_-]{8,}|sk-or-v1-[a-z0-9_-]{8,}|AIza[a-z0-9_-]{12,})\b/gi, "[redacted-secret]")
+    .replace(/\b(Bearer\s+)[a-z0-9._-]{12,}\b/gi, "$1[redacted-secret]")
+    .replace(/\b(api[_-]?key|authorization|password|secret|token)\s*[:=]\s*['\"]?[^'\"\s,;]+/gi, "$1=[redacted-secret]");
 }

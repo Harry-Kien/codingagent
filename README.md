@@ -30,7 +30,7 @@ Works entirely in demo mode without API keys. Optionally connects to OpenAI, Gem
 - `/projects/[id]` - result/report view with agent plan tabs, quality checks, section editing, copy, regenerate, and exports.
 - `/repo-map` - curated/live repo map viewer with reference-only policy.
 - `/agent-kit` - eight agent roles: Code Reviewer, Bug Fixer, UI Builder, Repo Mapper, Test Writer, Documentation, Deployment, and Product Manager.
-- `/settings` - local provider settings and MCP connection planner.
+- `/settings` - production readiness, server-provider test, local provider settings, and MCP connection planner.
 
 Required launch docs are maintained in `PRODUCT_AUDIT.md`, `PRODUCT_STRUCTURE.md`, `REPO_MAP.md`, `repo-map.json`, `AGENT_KIT.md`, `MEMORY_DESIGN.md`, `ROADMAP.md`, `UPGRADE_REPORT.md`, and `DEPLOY_REPORT.md`.
 
@@ -176,6 +176,9 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | No | Supabase anonymous key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Production only | Server-only key for provider vault and generation logs |
 | `VIBEFORGE_PROVIDER_KEY_SECRET` | Production only | Server-only encryption secret for provider API keys |
+| `VIBEFORGE_REDIS_REST_URL` | Production only | Redis/Upstash REST URL for durable rate limiting |
+| `VIBEFORGE_REDIS_REST_TOKEN` | Production only | Redis/Upstash REST token |
+| `ERROR_WEBHOOK_URL` | Production only | Optional error monitoring webhook |
 
 > Provider API keys configured through the Settings page still work as a local-first fallback. For production, store keys through the server-side provider vault and never expose service keys or encryption secrets through `NEXT_PUBLIC_*` variables.
 
@@ -204,6 +207,7 @@ To try it:
    - **Model**: Default, cheap, strong, and vision models
 4. Enable the provider
 5. New kit generations will use the server-side route (`/api/generate-kit`)
+6. Use **Settings -> Production readiness -> Test server provider** to confirm the production server provider works before relying on AI Provider Mode.
 
 ### Supported Providers
 
@@ -293,9 +297,24 @@ Provider profiles are owner-scoped with Supabase RLS. Production profiles store 
 
 `generation_logs` records route, provider, model, generation mode, source, status, error message, timestamps, and duration. This gives you a production audit trail for cost, failures, and model behavior.
 
+Provider error text is redacted before logs are written. Do not put provider keys in prompts, generated content, project names, or support messages.
+
 ### Rate limiting
 
-Generation and provider-test routes use per-IP in-memory rate limiting and return `Retry-After` when throttled. For multi-region production, replace the in-memory store with Redis or another shared limiter.
+Generation and provider-test routes use per-IP in-memory rate limiting and return `Retry-After` when throttled. For multi-region production, configure Redis/Upstash REST env vars so request limits are shared across instances. Redis keys are URL-encoded and Redis REST calls have timeout boundaries; if Redis is unavailable, VibeForge falls back to the in-memory limiter.
+
+### Production readiness panel
+
+Open `/settings` and review **Production readiness** before public rollout. The panel checks:
+
+- AI provider env presence
+- Provider vault env readiness
+- Durable Redis/Upstash rate limiting
+- External monitoring env
+- Supabase browser/admin configuration
+- Analytics and secret exposure guards
+
+Use **Test server provider** whenever provider env vars change. A configured key is not enough; the provider must accept the key and model.
 
 ---
 
@@ -343,6 +362,9 @@ These are stored locally and exported with your project kit.
 | `npm run check:exports` | Export pack verification (all packs, file mappings, quality terms) |
 | `npm run check:sample-output` | Sample project-kit output verification across common ideas |
 | `npm run check:production` | Production hardening checks (vault, logs, rate limits, secrets) |
+| `npm run check:api-flows` | API flow verification against `VIBEFORGE_API_BASE_URL` |
+| `npm run check:production-readiness` | Calls `/api/production-readiness` for deployment readiness |
+| `npm run check:vercel-env` | Inspects Vercel production env names |
 | `npm run check:launch` | Launch readiness verification |
 
 ---
@@ -381,6 +403,7 @@ npm.cmd run check:product
 npm.cmd run check:exports
 npm.cmd run check:production
 npm.cmd run check:sample-output
+npm.cmd run check:api-flows
 npm.cmd run test:e2e -- --list
 npm.cmd run test:e2e
 ```
@@ -412,6 +435,16 @@ npm.cmd run check:sample-output
 
 After deploy, verify `https://vibeforge-seven.vercel.app/` in a real browser across desktop, tablet, and mobile. Check the root builder, project generation in demo mode, project history, Markdown/JSON/ZIP exports, section copy/regeneration, settings persistence, MCP connections, repo recommendations for an AI video app, console errors, and network failures.
 
+If AI Provider Mode must be production-ready, run:
+
+```powershell
+$env:VIBEFORGE_API_BASE_URL="https://vibeforge-seven.vercel.app"
+$env:VIBEFORGE_REQUIRE_PROVIDER="1"
+npm.cmd run check:api-flows
+```
+
+This intentionally fails when the production provider key/model is invalid, even if Local/Demo Mode is healthy.
+
 ### Docker
 
 ```bash
@@ -434,7 +467,8 @@ npm start
 - **Supabase RLS** policies ensure users can only access their own projects.
 - **Input validation** uses Zod schemas on all API routes.
 - **Rate limiting** protects API routes from abuse (in-memory, per-IP).
-- **Generation logs** track provider, model, mode, status, and errors for production observability.
+- **Generation logs** track provider, model, mode, status, and redacted errors for production observability.
+- **Monitoring payloads** redact secret-like text before webhook delivery.
 - **No hardcoded secrets** in the codebase.
 - **URL sanitization** prevents SSRF in provider configurations.
 

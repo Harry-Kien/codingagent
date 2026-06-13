@@ -127,6 +127,9 @@ test.describe("Public beta core flow", () => {
     await page.goto("/settings");
     await expect(main(page).getByRole("heading", { level: 1 })).toContainText(/settings/i);
     await expect(main(page).getByText(/local fallback/i)).toBeVisible();
+    await expect(main(page).getByText(/production readiness/i)).toBeVisible();
+    await expect(main(page).getByRole("button", { name: /test server provider/i })).toBeVisible();
+    await expect(main(page).getByText(/provider vault/i)).toBeVisible();
 
     await main(page).getByRole("button", { name: /add provider/i }).click();
     await main(page).getByLabel(/provider name/i).first().fill("Public Beta Test Provider");

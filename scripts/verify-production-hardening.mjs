@@ -39,12 +39,14 @@ requireIncludes(files.generationLogs, "generation_logs", "Generation logs must w
 requireIncludes(files.generationLogs, "duration_ms", "Generation logs must include duration.");
 forbidIncludes(files.generationLogs, "apiKey", "Generation logs must not log API keys.");
 forbidIncludes(files.generationLogs, "api_key", "Generation logs must not log encrypted key fields.");
+requireIncludes(files.generationLogs, "sanitizeGenerationLogValue", "Generation logs must redact secret-like error text.");
 
 requireIncludes(files.generateRoute, "checkRateLimit", "Generate route must apply rate limiting.");
 requireIncludes(files.testProviderRoute, "checkRateLimit", "Test-provider route must apply rate limiting.");
 requireIncludes(files.rateLimit, "VIBEFORGE_REDIS_REST_URL", "Rate limiter must support durable Redis REST env.");
 requireIncludes(files.rateLimit, "UPSTASH_REDIS_REST_URL", "Rate limiter must support Upstash env.");
 requireIncludes(files.rateLimit, "AbortSignal.timeout", "Redis rate limiter must have upstream timeout protection.");
+requireIncludes(files.rateLimit, "encodeURIComponent(redisKey)", "Redis rate-limit keys must be URL-encoded.");
 requireIncludes(files.generateRoute, "writeGenerationLog", "Generate route must write generation logs.");
 requireIncludes(files.testProviderRoute, "writeGenerationLog", "Test-provider route must write generation logs.");
 requireIncludes(files.generateRoute, "resolveProviderForRequest", "Generate route must support providerProfileId resolution.");
@@ -72,6 +74,7 @@ requireIncludes(files.generationClient, "json?.error?.message", "Client must rea
 requireIncludes(files.monitoring, "reportError", "Monitoring helper must report structured errors.");
 requireIncludes(files.monitoring, "ERROR_WEBHOOK_URL", "Monitoring helper must support external error webhook.");
 requireIncludes(files.monitoring, "sanitizeLogPayload", "Monitoring helper must sanitize log payloads.");
+requireIncludes(files.monitoring, "redactSecretText", "Monitoring helper must redact secret-like text values.");
 
 requireIncludes(files.productionReadiness, "getProductionReadinessReport", "Missing production readiness report helper.");
 requireIncludes(files.productionReadiness, "providerVault", "Readiness report must check provider vault.");

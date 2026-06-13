@@ -61,9 +61,10 @@ class UpstashRedisRateLimiter implements RateLimiter {
 
   async check(key: string, max: number, windowMs: number): Promise<{ allowed: boolean; retryAfterMs: number }> {
     const redisKey = `vibeforge:ratelimit:${key}`;
+    const redisPathKey = encodeURIComponent(redisKey);
     try {
       // 1. Increment key
-      const incrRes = await fetch(`${this.url}/incr/${redisKey}`, {
+      const incrRes = await fetch(`${this.url}/incr/${redisPathKey}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${this.token}` },
         signal: AbortSignal.timeout(4000), // 4s timeout boundary
@@ -73,16 +74,18 @@ class UpstashRedisRateLimiter implements RateLimiter {
 
       // 2. If first request, set TTL expiration
       if (count === 1) {
-        await fetch(`${this.url}/pexpire/${redisKey}/${windowMs}`, {
+        await fetch(`${this.url}/pexpire/${redisPathKey}/${windowMs}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${this.token}` },
+          signal: AbortSignal.timeout(4000),
         });
       }
 
       // 3. Fetch TTL for accurate Retry-After header
-      const ttlRes = await fetch(`${this.url}/pttl/${redisKey}`, {
+      const ttlRes = await fetch(`${this.url}/pttl/${redisPathKey}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${this.token}` },
+        signal: AbortSignal.timeout(4000),
       });
       let ttl = windowMs;
       if (ttlRes.ok) {

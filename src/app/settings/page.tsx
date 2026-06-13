@@ -1,5 +1,6 @@
 import { ProviderSettingsForm } from "@/components/settings/ProviderSettingsForm";
 import { McpConnectionCard } from "@/components/settings/McpConnectionCard";
+import { ProductionReadinessPanel } from "@/components/settings/ProductionReadinessPanel";
 
 export default function SettingsPage() {
   return (
@@ -10,6 +11,7 @@ export default function SettingsPage() {
           Configure local provider profiles, cost routing defaults, and MCP/external connection plans.
         </p>
       </div>
+      <ProductionReadinessPanel />
       <ProviderSettingsForm />
       <McpConnectionCard />
     </div>
