@@ -23,32 +23,32 @@ export function StartBuildPanel({
       ];
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
+        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
             <CardTitle>Start Build</CardTitle>
             <p className="mt-1 text-sm leading-6 text-zinc-600">
               Hand this kit to a coding agent and start with the smallest working milestone.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-wrap gap-2">
             <CopyButton text={prompt} label="Copy first build prompt" />
             <ExportButton project={project} mode="agent-pack" packId="codex" label="Codex Pack" />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+      <CardContent className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
             <TerminalSquare className="h-4 w-4 text-teal-700" />
             First build prompt
           </div>
-          <pre className="mt-3 max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-zinc-950 p-3 text-xs leading-5 text-zinc-100">
+          <pre className="mt-3 max-h-56 min-w-0 overflow-auto whitespace-pre-wrap break-words rounded-md bg-zinc-950 p-3 text-xs leading-5 text-zinc-100 [overflow-wrap:anywhere]">
             {prompt}
           </pre>
         </div>
-        <div className="rounded-lg border border-teal-100 bg-teal-50 p-4">
+        <div className="min-w-0 rounded-lg border border-teal-100 bg-teal-50 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-teal-950">
             <ArrowRight className="h-4 w-4" />
             Next actions

@@ -54,7 +54,7 @@ export function MarkdownSection({
   }
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardContent className="p-0">
         <div className="flex flex-col gap-3 border-b border-zinc-100 p-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
@@ -66,7 +66,7 @@ export function MarkdownSection({
               Updated {new Date(meta?.updatedAt ?? project.updatedAt).toLocaleString()}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-wrap gap-2">
             <Button
               variant={isEditing ? "secondary" : "outline"}
               size="sm"
@@ -133,8 +133,8 @@ export function MarkdownSection({
             </div>
           </div>
         ) : null}
-        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <article className="max-h-[720px] overflow-auto p-5">
+        <div className="grid min-w-0 gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <article className="min-w-0 max-h-[720px] overflow-auto p-5">
             {isEditing ? (
               <textarea
                 aria-label={`${sectionTitle(sectionKey)} markdown`}
@@ -146,14 +146,16 @@ export function MarkdownSection({
                     draft: event.target.value,
                   })
                 }
-                className="min-h-[520px] w-full resize-y rounded-md border border-zinc-300 bg-white p-4 font-mono text-sm leading-6 text-zinc-900 shadow-inner outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+                className="min-h-[520px] w-full min-w-0 resize-y rounded-md border border-zinc-300 bg-white p-4 font-mono text-sm leading-6 text-zinc-900 shadow-inner outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
                 spellCheck={false}
               />
             ) : (
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-zinc-800">{content}</pre>
+              <pre className="min-w-0 whitespace-pre-wrap break-words font-sans text-sm leading-6 text-zinc-800 [overflow-wrap:anywhere]">
+                {content}
+              </pre>
             )}
           </article>
-          <aside className="border-t border-zinc-100 p-4 lg:border-l lg:border-t-0">
+          <aside className="min-w-0 border-t border-zinc-100 p-4 lg:border-l lg:border-t-0">
             <h3 className="text-sm font-semibold text-zinc-900">Version history</h3>
             {meta?.history.length ? (
               <div className="mt-3 grid gap-2">
